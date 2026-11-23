@@ -70,11 +70,12 @@ export default function Compare({ comparison, byId }: { comparison: Comparison; 
           <p><strong>{name(suggested)} · {cop(recommendation.price)}</strong></p>
           <p>{practicalFacts(suggested).carrying} {practicalFacts(suggested).work} {priceAdvice(suggested)}</p>
           <p>{practicalFacts(suggested).display}</p>
+          {recommendation.preference && <p>{recommendation.preference}</p>}
           {alternatives && <p><strong>Si prefieres gastar menos</strong> · {name(alternatives.laptop)} cuesta {cop(recommendation.price - alternatives.price)} menos. {practicalFacts(alternatives.laptop).memory} {practicalFacts(alternatives.laptop).carrying}</p>}
           {screenAlternative && <p><strong>Si priorizas la pantalla</strong> · {name(screenAlternative.laptop)} tiene una cobertura de color amplia y documentada.</p>}
         </> : <p>Falta un precio reciente dentro de los $2 a $4 millones para recomendar uno de estos equipos con confianza.</p>}
         <details className="buyer-details"><summary>Cómo elijo</summary>
-          <p>Primero miro cuáles caben en el presupuesto con precios revisados en los últimos 14 días. Entre esos equipos doy prioridad a los fáciles de cargar, con al menos 16 GB de memoria, una pantalla documentada para diseño y un precio que corresponda a sus ventajas.</p>
+          <p>Primero miro cuáles caben en el presupuesto con precios revisados en los últimos 14 días. Entre esos equipos doy prioridad a los fáciles de cargar, con al menos 16 GB de memoria, una pantalla documentada para diseño y un precio que corresponda a sus ventajas. Si dos opciones son parecidas, la línea Vivobook tiene una pequeña ventaja.</p>
         </details>
       </section>
       <section className="section-card tradeoffs" aria-labelledby="tradeoffs-title"><h2 id="tradeoffs-title">Lo que cambia para ti</h2>

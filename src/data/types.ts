@@ -5,6 +5,7 @@ export type RetailListing = {
   retailerId: RetailerId
   url: string
   marketplaceSeller?: string
+  officialMarketplaceStore?: boolean
   paymentNote?: string
 }
 
@@ -28,7 +29,7 @@ export type Laptop = {
   source: string
   image?: string
   cpu: string
-  cpuBrand: 'Intel' | 'AMD'
+  cpuBrand: 'Intel' | 'AMD' | 'Qualcomm'
   cpuCores?: number
   ram: number
   storage: number

@@ -1,4 +1,5 @@
 import type { Laptop } from './types.ts'
+import { extraVivobooks } from './vivobooks.ts'
 
 const alkosto = 'https://www.alkosto.com/'
 const falabella = 'https://www.falabella.com.co/falabella-co/product/'
@@ -147,6 +148,8 @@ export const laptops: Laptop[] = [
       { retailerId: 'falabella', url: 'https://www.falabella.com.co/falabella-co/product/73493742/port16vivbook16-r5-16g-512g-silver/73493742' },
       { retailerId: 'exito', url: 'https://www.exito.com/portatil-asus-vivobook-16-amd-ryzen-ai-5-330-ram-16-gb-512-gb-ssd-m1607ka-mb150w-3241891/p' },
       { retailerId: 'pronetsys', url: 'https://store.pronetsys.com.co/producto/asus-vivobook-16', paymentNote: 'El pago por pasarela puede tener un recargo.' },
+      { retailerId: 'mercadolibre', url: 'https://www.mercadolibre.com.co/notebook-asus-vivobook-16-de-16-con-ryzen-ai-5-512-gb-ssd-y-16-gb-ram-gris/p/MCO79067490', marketplaceSeller: 'Ultra Gamer', officialMarketplaceStore: true },
     ],
   },
+  ...extraVivobooks,
 ]

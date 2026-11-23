@@ -1,23 +1,19 @@
 import { useState } from 'react'
 import { RotateCcw, SlidersHorizontal } from 'lucide-react'
 import type { Laptop } from '../data/types'
+import { Dropdown, type DropdownOption } from './Dropdown'
 import { CEILING, cop, defaultFilters, FLOOR, type Filters } from '../lib/catalog'
 
 type Props = { filters: Filters; setFilters: (filters: Filters) => void; laptops: Laptop[] }
-type Option = [string, string]
-const options = (values: string[]): Option[] => [...new Set(values)].sort().map(value => [value, value])
+const options = (values: string[]): DropdownOption[] => [...new Set(values)].sort().map(value => [value, value])
 const step = 50_000
 
 export function CatalogFilters({ filters, setFilters, laptops }: Props) {
   const [open, setOpen] = useState(false)
   const change = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters({ ...filters, [key]: value })
-  function select(key: 'brand' | 'cpu' | 'ram' | 'ssd' | 'screen' | 'panel' | 'weight' | 'gpu' | 'os', label: string, entries: Option[]) {
-    return <label className="filter-label">{label}
-      <select value={filters[key]} onChange={event => change(key, event.target.value)}>
-        <option value="">Cualquiera</option>
-        {entries.map(([value, text]) => <option key={value} value={value}>{text}</option>)}
-      </select>
-    </label>
+  function select(key: 'brand' | 'cpu' | 'ram' | 'ssd' | 'screen' | 'panel' | 'weight' | 'gpu' | 'os', label: string, entries: DropdownOption[]) {
+    return <Dropdown className="filter-label" label={label} value={filters[key]}
+      options={ [['', 'Cualquiera'], ...entries] } onChange={value => change(key, value)} />
   }
   function check(key: 'portable' | 'design' | 'creative' | 'threeD' | 'unpriced', text: string) {
     return <label className="check"><input type="checkbox" checked={filters[key]} onChange={e => change(key, e.target.checked)} />{text}</label>

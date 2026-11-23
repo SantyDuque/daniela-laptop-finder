@@ -1,11 +1,16 @@
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { laptops } from '../src/data/laptops'
 import { observationsFor, offersFor } from '../src/data/priceHistory'
-import { best, defaultFilters, filterCatalog } from '../src/lib/catalog'
+import { best, defaultFilters, filterCatalog, isVivobook, recommended } from '../src/lib/catalog'
 
 const defaultResults = filterCatalog(laptops, defaultFilters).length
 const comparisonIds = ['asus-vivobook-s14-oled', 'lenovo-ideapad-slim-3-15ahp10', 'acer-aspire-lite-15-r5tw']
-const historyEmpty = 'Apenas estamos empezando a registrar precios. Pronto podrás ver cómo cambian con el tiempo.'
+const historyStart = 'Apenas estamos empezando a registrar precios. Mostraremos cómo cambian cuando tengamos registros de más fechas.'
+
+async function choose(page: Page, label: string, option: string) {
+  await page.getByRole('combobox', { name: label, exact: true }).click()
+  await page.getByRole('option', { name: option, exact: true }).click()
+}
 
 test('catalog filters, reset, buyer guide and preference persistence', async ({ page, isMobile }) => {
   await page.goto('/')
@@ -17,9 +22,10 @@ test('catalog filters, reset, buyer guide and preference persistence', async ({ 
   await expect(products.first().getByText('Espacio para tus archivos')).toBeVisible()
 
   if (isMobile) await page.getByRole('button', { name: 'Filtros', exact: true }).click()
-  await page.getByRole('combobox', { name: 'Marca', exact: true }).selectOption('Acer')
+  await expect(page.locator('select')).toHaveCount(0)
+  await choose(page, 'Marca', 'Acer')
   await expect(products).toHaveCount(2)
-  await page.getByRole('combobox', { name: 'Peso máximo' }).selectOption('1.55')
+  await choose(page, 'Peso máximo', '1,55 kg')
   await expect(products).toHaveCount(1)
   await page.reload()
   await expect(products).toHaveCount(1)
@@ -27,7 +33,7 @@ test('catalog filters, reset, buyer guide and preference persistence', async ({ 
   await expect(page.getByText('No encontramos portátiles con esos filtros')).toBeVisible()
   await page.getByRole('button', { name: 'Restablecer filtros' }).click()
   await expect(products).toHaveCount(defaultResults)
-  await page.getByRole('combobox', { name: 'Ordenar por' }).selectOption('low')
+  await choose(page, 'Ordenar por', 'Menor precio')
   await expect(products.first()).toContainText(filterCatalog(laptops, { ...defaultFilters, sort: 'low' })[0].model)
 })
 
@@ -97,12 +103,15 @@ test('prices, marketplace seller, unverified data and progressive specifications
   await expect(page.getByRole('heading', { name: 'Vivobook 16', exact: true })).toBeVisible()
   const offers = page.getByRole('region', { name: 'Precios por tienda' })
   const links = offers.getByRole('link', { name: /^Ver en la tienda/ })
-  await expect(links).toHaveCount(6)
+  await expect(links).toHaveCount(7)
   await expect(offers.getByText('Marketplace · Vendido por Inteco MC SAS')).toBeVisible()
   await expect(offers.getByRole('link', { name: /^Ver en la tienda Falabella · Inteco/ })).toHaveAttribute('target', '_blank')
   await expect(offers.getByRole('link', { name: /Pronetsys/ })).toHaveAttribute('href', 'https://store.pronetsys.com.co/producto/asus-vivobook-16')
   await expect(offers.getByText('Agotado al consultar')).toHaveCount(3)
-  await expect(offers.getByText('Precio sin verificar', { exact: true })).toBeVisible()
+  await expect(offers.getByText('Precio sin verificar', { exact: true })).toHaveCount(2)
+  await expect(offers.getByText(/Vendido por Ultra Gamer.*Tienda oficial en Mercado Libre/)).toBeVisible()
+  await offers.getByText('¿Y si lo compro en Amazon?').click()
+  await expect(offers.getByText(/cargos de importación/)).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Para tu trabajo creativo' })).toBeVisible()
   await page.getByText('Especificaciones técnicas', { exact: true }).click()
   await expect(page.getByText('AMD Ryzen AI 5 330', { exact: true })).toBeVisible()
@@ -113,7 +122,7 @@ test('prices, marketplace seller, unverified data and progressive specifications
 test('shows the one-day history and makes old prices explicit', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2030-01-01T15:00:00Z'))
   await page.goto('/laptops/hp-victus-15-fa2009la')
-  await expect(page.getByText(historyEmpty)).toBeVisible()
+  await expect(page.getByText(historyStart)).toBeVisible()
   await expect(page.getByText('Precio anterior más bajo')).toBeVisible()
   const offers = page.getByRole('region', { name: 'Precios por tienda' })
   await expect(offers.getByText('Puede estar desactualizado')).toHaveCount(4)
@@ -126,9 +135,10 @@ test('chart shows actual date spacing, retailer minimum and date-range controls'
   await expect(page.getByText('Mínimo observado')).toBeVisible()
   await expect(page.locator('.recharts-line-curve')).toHaveCount(2)
   await expect(page.getByText('El precio más bajo de este periodo se registró en', { exact: false })).toContainText('Alkosto')
-  await page.getByRole('combobox', { name: 'Periodo' }).selectOption('30')
-  await expect(page.getByText('Hay un solo registro en el periodo elegido.')).toBeVisible()
-  await page.getByRole('combobox', { name: 'Periodo' }).selectOption('0')
+  await expect(page.locator('select')).toHaveCount(0)
+  await choose(page, 'Periodo', 'Últimos 30 días')
+  await expect(page.getByText('Hay un solo día con precios registrados en el periodo elegido.')).toBeVisible()
+  await choose(page, 'Periodo', 'Todo el historial')
   await expect(page.locator('.recharts-dot')).not.toHaveCount(0)
 })
 
@@ -147,4 +157,71 @@ test('dataset keeps prices and observations attached to the exact listing', () =
       expect(Number.isSafeInteger(item.price) && item.price > 0).toBe(true)
     }
   }
+})
+
+test('Vivobook shortcut includes cheaper models and keeps the product image in frame', async ({ page }) => {
+  await page.route('https://media.falabella.com/**', route => route.fulfill({
+    contentType: 'image/svg+xml',
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="288" height="360"><rect width="288" height="360" fill="teal"/></svg>',
+  }))
+  await page.goto('/#catalogo')
+  await page.getByRole('button', { name: 'Ver Vivobook de todos los precios' }).click()
+  const products = page.locator('.product-card')
+  await expect(products).toHaveCount(8)
+  const go = products.filter({ hasText: 'E1404FA-EB1395W' })
+  await expect(go).toBeVisible()
+  const frame = go.locator('.product-art')
+  const photo = frame.locator('img')
+  await expect(photo).toBeVisible()
+  const sizing = await photo.evaluate(img => ({
+    photo: img.getBoundingClientRect().toJSON(),
+    frame: img.parentElement!.getBoundingClientRect().toJSON(),
+    fit: getComputedStyle(img).objectFit,
+  }))
+  expect(sizing.fit).toBe('contain')
+  expect(sizing.frame.height).toBeGreaterThan(150)
+  expect(sizing.photo.bottom).toBeLessThanOrEqual(sizing.frame.bottom)
+  expect(sizing.photo.left).toBeGreaterThanOrEqual(sizing.frame.left)
+  expect(sizing.photo.right).toBeLessThanOrEqual(sizing.frame.right)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width)
+})
+
+test('dropdown supports keyboard selection, Escape, and return focus', async ({ page }) => {
+  await page.goto('/#catalogo')
+  const sorting = page.getByRole('combobox', { name: 'Ordenar por' })
+  await sorting.focus()
+  await sorting.press('ArrowDown')
+  await expect(page.getByRole('listbox')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(sorting).toBeFocused()
+  await sorting.press('Enter')
+  await page.keyboard.press('End')
+  await page.keyboard.press('Enter')
+  await expect(sorting).toHaveText('Mejor relación calidad-precio')
+  await expect(sorting).toBeFocused()
+})
+
+test('same-day price snapshot gives the verified retailer, spread and date', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-23T17:00:00Z'))
+  await page.goto('/laptops/asus-vivobook-go-14')
+  const history = page.getByRole('region', { name: 'Historial de precios' })
+  await expect(history.getByRole('heading', { name: 'Precios verificados hoy' })).toBeVisible()
+  await expect(history.locator('.daily-best')).toContainText('Jumbo')
+  await expect(history.locator('.daily-best')).toContainText('$ 1.499.900')
+  await expect(history.locator('.daily-prices time')).toHaveAttribute('dateTime', '2026-11-23')
+  await expect(history.locator('.recharts-line-curve')).toHaveCount(0)
+  const offers = page.getByRole('region', { name: 'Precios por tienda' })
+  await expect(offers.locator('.offer-range')).toContainText('Falabella')
+  await expect(offers.locator('.offer-range')).toContainText('$ 150.000')
+  await page.goto('/laptops/asus-vivobook-14-x1404va')
+  await expect(history.getByText(/Por ahora solo tenemos el valor verificado de hoy/)).toBeVisible()
+  await expect(history.locator('.daily-prices')).toContainText('Compumarket BGA')
+})
+
+test('Vivobook preference breaks near-ties without outweighing substantially better fit', () => {
+  const vivobook = laptops.find(laptop => laptop.id === 'asus-vivobook-16-x1607ca')!
+  const other = { ...vivobook, brand: 'Lenovo', model: 'IdeaPad' }
+  expect(laptops.filter(isVivobook)).toHaveLength(8)
+  expect(recommended(vivobook) - recommended(other)).toBe(3)
+  expect(recommended({ ...other, weight: 1.3 })).toBeGreaterThan(recommended(vivobook))
 })

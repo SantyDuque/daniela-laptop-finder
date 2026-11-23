@@ -37,10 +37,14 @@ function fit(laptop: Laptop) {
     + (creative(laptop) ? 5 : 0) + Math.min(laptop.cpuCores ?? 0, 8)
 }
 
+export const isVivobook = (laptop: Laptop) => laptop.brand === 'ASUS' && /^Vivobook\b/i.test(laptop.model)
+
 export function recommended(laptop: Laptop) {
   const offer = best(laptop)
   const price = offer?.stale ? undefined : offer?.price
-  return fit(laptop) + (price === undefined ? 0 : price <= DEFAULT_MAX ? 22 - Math.max(0, price - DEFAULT_MIN) / 150_000 : 2)
+  const budget = price === undefined ? 0 : price <= DEFAULT_MAX ? 22 - Math.max(0, price - DEFAULT_MIN) / 150_000 : 2
+  // Three points can break a close tie without overriding a materially stronger fit.
+  return fit(laptop) + budget + (isVivobook(laptop) ? 3 : 0)
 }
 
 export function value(laptop: Laptop) {

@@ -284,5 +284,137 @@
     "currency": "COP",
     "availability": "available",
     "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-go-14",
+    "configurationId": "E1404FA-EB1395W",
+    "retailerId": "jumbo",
+    "productUrl": "https://www.jumbocolombia.com/computador-portatil-asus-vivobook-go-14-e1404fa-eb1395w-423223/p",
+    "price": 1499900,
+    "observedAt": "2026-11-23T15:33:41.421Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-go-14",
+    "configurationId": "E1404FA-EB1395W",
+    "retailerId": "falabella",
+    "productUrl": "https://www.falabella.com.co/falabella-co/product/73555264/port14vivobook-r3-8g-512gb-black",
+    "price": 1649900,
+    "observedAt": "2026-11-23T15:29:54.435Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-go-15-16gb",
+    "configurationId": "E1504FA-BQ4316W",
+    "retailerId": "falabella",
+    "productUrl": "https://www.falabella.com.co/falabella-co/product/73555265/port15-6vivobook-r5-16g-512gb-black/73555265",
+    "price": 2299900,
+    "observedAt": "2026-11-23T15:29:56.867Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-go-15-16gb",
+    "configurationId": "E1504FA-BQ4316W",
+    "retailerId": "falabella",
+    "productUrl": "https://www.falabella.com.co/falabella-co/product/136376704/Portatil-Asus-E1504fa-nj1555-Ryzen-5-7520u-Ram-16gb-Ssd-512gb-Pantalla-15%2C6/136376705",
+    "price": 1899000,
+    "observedAt": "2026-11-23T15:29:58.992Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-14-x1404va",
+    "configurationId": "X1404VA-EB2263",
+    "retailerId": "falabella",
+    "productUrl": "https://www.falabella.com.co/falabella-co/product/156973797/portatil-asus-vivobook-14-intel-core-5-120u-ram-16gb-ssd-512gb-led-fhd-14/156973798",
+    "price": 2189900,
+    "observedAt": "2026-11-23T15:35:04.409Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-16-x1607ca",
+    "configurationId": "X1607CA-MB110W",
+    "retailerId": "pronetsys",
+    "productUrl": "https://store.pronetsys.com.co/producto/asus-vivobook",
+    "price": 3360560,
+    "observedAt": "2026-11-23T15:30:04.333Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-16-x1607ca",
+    "configurationId": "X1607CA-MB110W",
+    "retailerId": "alkosto",
+    "productUrl": "https://www.alkosto.com/computador-portatil-asus-vivobook-16-pulgadas-x1607ca/p/4711636049771",
+    "price": 2499050,
+    "observedAt": "2026-11-23T15:30:02.709Z",
+    "currency": "COP",
+    "availability": "sold-out",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-16-x1607ca",
+    "configurationId": "X1607CA-MB110W",
+    "retailerId": "ktronix",
+    "productUrl": "https://www.ktronix.com/computador-portatil-asus-vivobook-16-pulgadas-x1607ca/p/4711636049771",
+    "price": 2499050,
+    "observedAt": "2026-11-23T15:33:48.290Z",
+    "currency": "COP",
+    "availability": "sold-out",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-16-x1607ca",
+    "configurationId": "X1607CA-MB110W",
+    "retailerId": "alkomprar",
+    "productUrl": "https://www.alkomprar.com/computador-portatil-asus-vivobook-16-pulgadas-x1607ca/p/4711636049771",
+    "price": 2499050,
+    "observedAt": "2026-11-23T15:33:50.518Z",
+    "currency": "COP",
+    "availability": "sold-out",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-s14-snapdragon",
+    "configurationId": "S3407QA-SF100W",
+    "retailerId": "alkosto",
+    "productUrl": "https://www.alkosto.com/computador-portatil-asus-vivobook-s-14-s3407qa-oled/p/4711636618052",
+    "price": 3699050,
+    "observedAt": "2026-11-23T15:30:05.825Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-s14-snapdragon",
+    "configurationId": "S3407QA-SF100W",
+    "retailerId": "ktronix",
+    "productUrl": "https://www.ktronix.com/computador-portatil-asus-vivobook-s-14-s3407qa-oled/p/4711636618052",
+    "price": 3699050,
+    "observedAt": "2026-11-23T15:33:43.380Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "asus-vivobook-s14-snapdragon",
+    "configurationId": "S3407QA-SF100W",
+    "retailerId": "alkomprar",
+    "productUrl": "https://www.alkomprar.com/computador-portatil-asus-vivobook-s-14-s3407qa-oled/p/4711636618052",
+    "price": 3699050,
+    "observedAt": "2026-11-23T15:33:45.765Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "manual"
   }
 ]

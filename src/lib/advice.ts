@@ -1,5 +1,5 @@
 import type { Laptop } from '../data/types'
-import { best, cop, DEFAULT_MAX, DEFAULT_MIN, designScreen, portable, recommended, storage, threeD, weight } from './catalog'
+import { best, cop, DEFAULT_MAX, DEFAULT_MIN, designScreen, isVivobook, portable, recommended, storage, threeD, weight } from './catalog'
 
 export function practicalFacts(laptop: Laptop) {
   return {
@@ -16,7 +16,9 @@ export function practicalFacts(laptop: Laptop) {
       : laptop.gamut ? 'La pantalla sirve para uso diario. Su cobertura de color es limitada para trabajos que exigen tonos precisos.'
       : laptop.panel === 'IPS' ? 'Pantalla IPS con una imagen más estable al mirarla de lado. Falta confirmar qué tan fieles son sus colores.'
       : 'Sirve para revisar diseños y documentos. Falta confirmar qué tan fieles son sus colores.',
-    work: threeD(laptop) ? 'Sus gráficos dedicados ayudan a mover escenas 3D sencillas. La memoria y el tamaño del proyecto marcan el límite.'
+    work: laptop.cpuBrand === 'Qualcomm'
+      ? 'Buena opción para diseño en el navegador. Si usas aplicaciones instaladas o complementos, revisa que funcionen en Windows para ARM.'
+      : threeD(laptop) ? 'Sus gráficos dedicados ayudan a mover escenas 3D sencillas. La memoria y el tamaño del proyecto marcan el límite.'
       : laptop.ram >= 16 ? 'Buena base para Canva, Figma y archivos de Photoshop o Illustrator de tamaño moderado.'
       : 'Adecuado para Canva, Figma y retoques sencillos. Los proyectos más pesados pueden exigir más memoria.',
     buyer: threeD(laptop) ? 'Quien quiera explorar 3D básico y trabaje sobre todo en un escritorio.'
@@ -31,6 +33,7 @@ export function priceAdvice(laptop: Laptop) {
   const offer = best(laptop)
   if (!offer) return 'Falta un precio de tienda para saber si vale la pena.'
   if (offer.stale) return 'Confirma el precio en la tienda antes de decidir si vale la pena.'
+  if (offer.price < DEFAULT_MIN) return 'Está por debajo del presupuesto. Vale la pena si cubre las tareas y los programas que usas.'
   if (offer.price > DEFAULT_MAX) return 'Supera el presupuesto de Daniela. Conviene comparar con alternativas que cubran el mismo uso.'
   if (offer.price <= 2_600_000 && laptop.ram >= 16) return 'Cerca del extremo bajo del presupuesto, con memoria suficiente para diseño cotidiano.'
   if (offer.price <= 2_600_000) return 'Deja margen en el presupuesto si tu trabajo se concentra en tareas sencillas.'
@@ -67,5 +70,10 @@ export function pickForDaniela(selected: Laptop[]) {
   const cheaper = eligible.filter(item => item.price < pick.price).sort((a, b) => a.price - b.price)
   const alternative = cheaper.find(item => everyday.includes(item)) ?? cheaper[0]
   const screenAlternative = eligible.find(item => item.laptop.id !== pick.laptop.id && designScreen(item.laptop))
-  return { ...pick, alternative, screenAlternative: designScreen(pick.laptop) ? undefined : screenAlternative }
+  const preference = isVivobook(pick.laptop)
+    ? 'También coincide con tu preferencia por la línea ASUS Vivobook. Le damos una pequeña ventaja cuando las opciones son parecidas.'
+    : eligible.some(item => isVivobook(item.laptop))
+      ? 'En esta selección, el equilibrio entre precio, peso y uso de este equipo pesa más que la preferencia por Vivobook.'
+      : undefined
+  return { ...pick, alternative, preference, screenAlternative: designScreen(pick.laptop) ? undefined : screenAlternative }
 }

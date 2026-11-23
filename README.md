@@ -8,13 +8,13 @@ Guía de compra en español colombiano para comparar portátiles de aproximadame
 - Comparar hasta tres configuraciones. Primero verás para quién conviene cada equipo y qué elegiría para Daniela. La tabla conserva los detalles técnicos.
 - Abrir una ficha para revisar su pantalla, peso, espacio para archivos y capacidad para trabajar con varias aplicaciones.
 - Comparar precios, fechas y disponibilidad registrada. Las publicaciones de un vendedor externo muestran su nombre.
-- Consultar precios de diferentes tiendas en el tiempo cuando existen registros de al menos dos fechas.
+- Comparar precios verificados de una sola fecha o ver cómo cambian cuando hay datos de varios días.
 
 La selección y las preferencias se guardan en el navegador.
 
 ## Comandos
 
-Requiere Node.js 24 y npm. La aplicación usa React, TypeScript, Vite, Tailwind CSS, React Router, Lucide y Recharts.
+Requiere Node.js 24 y npm. La aplicación usa React, TypeScript, Vite, Tailwind CSS, React Router, Radix Select, Lucide y Recharts.
 
 ```sh
 npm ci
@@ -66,9 +66,13 @@ El script `scripts/update-prices.ts` consulta las fichas de **Pronetsys Store** 
 npm run prices:update -- --dry-run
 ```
 
-Alkosto, Ktronix, Alkomprar, Falabella, Éxito y Klikken Group se revisan manualmente. Las publicaciones de marketplace pueden cambiar de vendedor. Éxito y Mercado Libre bloquearon las consultas directas durante la verificación. Si una tienda bloquea solicitudes, mantén la revisión manual y anota una nueva observación únicamente cuando puedas confirmar el precio público de la referencia. La ficha de Éxito verificada se muestra sin precio.
+Alkosto, Ktronix, Alkomprar, Falabella, Éxito, Jumbo, Mercado Libre y Klikken Group se revisan manualmente. Las publicaciones de marketplace pueden cambiar de vendedor. Éxito y Mercado Libre bloquearon las consultas directas durante la verificación. Si una tienda bloquea solicitudes, mantén la revisión manual y anota una nueva observación únicamente cuando puedas confirmar el precio público de la referencia. Las referencias verificadas de Éxito y Mercado Libre se muestran sin precio vigente cuando la publicación bloquea la consulta.
 
 GitHub Actions usa `GITHUB_TOKEN` con permiso de escritura de contenido en el trabajo de actualización. Guarda y publica solo `src/data/price-history.json` cuando hay cambios. Si la rama tiene protección, el repositorio debe permitir el commit del workflow o se usa la importación manual. Los logs de Actions indican fichas revisadas, omitidas o sin cambios.
+
+## Comprar desde el exterior
+
+AmazonGlobal ofrece envíos a Colombia según el producto, vendedor y dirección. En esta revisión no se corroboró una oferta de Amazon con precio y entrega a Colombia para las configuraciones del catálogo. Una publicación de Vivobook Go 15 para el mercado estadounidense indicaba que no enviaba al destino seleccionado en Colombia. Los precios comparados son en COP y no incluyen conversiones de moneda. Si revisas una opción internacional, confirma la referencia, el teclado, la garantía local y el total con envío e importación.
 
 ## Publicar en Vercel
 

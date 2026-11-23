@@ -5,6 +5,7 @@ import { BuyerGuide } from '../components/BuyerGuide'
 import { CompareButton, type Comparison } from '../components/Controls'
 import { ProductImage } from '../components/ProductImage'
 import { observationsFor, offersFor } from '../data/priceHistory'
+import { observationDay } from '../data/observationRecords'
 import type { Laptop } from '../data/types'
 import { best, color, cop, date, listed, screen, storage, threeD, unknown, weight } from '../lib/catalog'
 
@@ -14,14 +15,27 @@ function Offers({ laptop }: { laptop: Laptop }) {
   const listedOffers = listed(laptop)
   const recent = listedOffers.filter(offer => !offer.stale)
   const offers = [...listedOffers, ...offersFor(laptop).filter(offer => offer.price === undefined || offer.availability === 'sold-out')]
-  const spread = recent.length >= 2 ? recent.at(-1)!.price - recent[0].price : undefined
+  const lowest = recent[0]
+  const highest = recent.length >= 2 ? recent.at(-1) : undefined
+  const spread = highest && highest.price - lowest.price
+  const today = observationDay(new Date().toISOString())
   return <section className="section-card" aria-labelledby="offers-title">
     <div className="section-heading"><div><h2 id="offers-title"><ShoppingBag /> Precios por tienda</h2>
       <p>Precios publicados para esta configuración. Confirma el total y el inventario en la tienda.</p></div></div>
+    {lowest && <dl className="offer-range">
+      <div><dt>Menor precio verificado</dt><dd><strong>{cop(lowest.price)}</strong> en {lowest.retailer}</dd></div>
+      {highest && spread === 0 && <div><dt>Comparación de precios</dt><dd>Las ofertas recientes tienen el mismo precio.</dd></div>}
+      {highest && spread !== undefined && spread > 0 && <>
+        <div><dt>Mayor precio verificado</dt><dd><strong>{cop(highest.price)}</strong> en {highest.retailer}</dd></div>
+        <div><dt>Ahorro frente al mayor precio</dt><dd><strong>{cop(spread)}</strong></dd></div>
+      </>}
+    </dl>}
     {offers.length ? <div className="offer-list">{offers.map((offer, index) => <article className="offer" key={offer.url}>
       <div><strong>{offer.listedBy}</strong>{recent.length > 0 && index === 0 && <span className="offer-badge">Mejor precio encontrado</span>}
-        {offer.marketplaceSeller && <p>Marketplace · Vendido por {offer.marketplaceSeller}</p>}
-        {offer.checkedAt && <p>{offer.price === undefined ? 'Disponibilidad revisada' : 'Precio revisado'} el <time dateTime={offer.checkedAt}>{date(offer.checkedAt)}</time></p>}
+        {offer.marketplaceSeller || offer.retailerId === 'mercadolibre'
+          ? <p>Marketplace{offer.marketplaceSeller && ` · Vendido por ${offer.marketplaceSeller}`}{offer.officialMarketplaceStore && ' · Tienda oficial en Mercado Libre'}</p>
+          : <p>Venta directa en Colombia</p>}
+        {offer.checkedAt && <p>{offer.price === undefined ? 'Disponibilidad revisada' : 'Precio revisado'} <time dateTime={offer.checkedAt}>{offer.checkedAt === today ? `hoy · ${date(offer.checkedAt)}` : `el ${date(offer.checkedAt)}`}</time></p>}
         <p>{offer.availability === 'available' ? 'Disponible al consultar' : offer.availability === 'sold-out' ? 'Agotado al consultar' : 'Disponibilidad sin verificar'}</p>
         {offer.stale && <p className="price-aged">Puede estar desactualizado</p>}
         {offer.paymentNote && <p>{offer.paymentNote}</p>}
@@ -35,8 +49,11 @@ function Offers({ laptop }: { laptop: Laptop }) {
         <a className="button secondary" href={offer.url} target="_blank" rel="noopener noreferrer" aria-label={`Ver en la tienda ${offer.retailer} (abre en otra pestaña)`}>Ver en la tienda <ArrowUpRight size={16} /></a>
       </div>
     </article>)}</div> : <p className="history-empty">Aún no hay ofertas verificadas para esta configuración.</p>}
-    {spread !== undefined && <p className="spread">{spread === 0 ? 'Las ofertas recientes tienen el mismo precio.' : `Puedes ahorrar hasta ${cop(spread)} frente a la oferta reciente más cara.`}</p>}
     <p className="muted fineprint">Precios web generales. Se excluyen los descuentos condicionados por tarjeta y los costos de envío sin verificar.</p>
+    {laptop.brand === 'ASUS' && <details className="buyer-details import-help"><summary>¿Y si lo compro en Amazon?</summary>
+      <p>Las ofertas verificadas de esta ficha corresponden a tiendas en Colombia. Si compras desde afuera, revisa que sea la misma referencia y que el vendedor entregue en tu dirección. El total puede cambiar por el envío y los cargos de importación.</p>
+      <a href="https://digprjsurvey.amazon.com/csad/help/node/GCBBSZMUXA6U2P8R" target="_blank" rel="noopener noreferrer">Consultar envíos internacionales de Amazon <ArrowUpRight size={14} /></a>
+    </details>}
   </section>
 }
 
@@ -52,6 +69,7 @@ const specifications = (laptop: Laptop): [string, [string, string][]][] => [
 function DesignFit({ laptop }: { laptop: Laptop }) {
   const enoughRam = laptop.ram >= 16
   return <section className="section-card" aria-labelledby="design-title"><h2 id="design-title"><Palette /> Para tu trabajo creativo</h2>
+    {laptop.cpuBrand === 'Qualcomm' && <p className="muted fineprint">Este portátil usa Windows para ARM. Revisa las versiones compatibles de las aplicaciones y los complementos que usas antes de comprar.</p>}
     <dl className="design-list">
       <div><dt>Canva y Figma</dt><dd>Adecuado para diseños y prototipos habituales{enoughRam ? ' y para trabajar con varias pestañas abiertas' : ', con pocas pestañas abiertas'}.</dd></div>
       <div><dt>Photoshop, Illustrator y diseño gráfico</dt><dd>{enoughRam

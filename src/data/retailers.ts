@@ -7,6 +7,8 @@ export const retailers = {
   pronetsys: { name: 'Pronetsys Store', host: 'store.pronetsys.com.co' },
   pixelbuy: { name: 'Pixel Buy', host: 'pixelbuy.com.co' },
   klikken: { name: 'Klikken Group', host: 'klikken.com.co' },
+  jumbo: { name: 'Jumbo', host: 'www.jumbocolombia.com' },
+  mercadolibre: { name: 'Mercado Libre', host: 'www.mercadolibre.com.co' },
 } as const
 
 export type RetailerId = keyof typeof retailers

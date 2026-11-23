@@ -5,12 +5,17 @@ import { CompareButton, type Comparison } from '../components/Controls'
 import { BuyerGuide } from '../components/BuyerGuide'
 import { CatalogFilters } from '../components/Filters'
 import { ProductImage } from '../components/ProductImage'
+import { Dropdown, type DropdownOption } from '../components/Dropdown'
 import { laptops } from '../data/laptops'
 import { updated } from '../data/priceHistory'
 import type { Laptop } from '../data/types'
-import { badge, best, cop, date, defaultFilters, filterCatalog, listed, readStorage, saveStorage, type Filters } from '../lib/catalog'
+import { badge, best, CEILING, cop, date, defaultFilters, filterCatalog, FLOOR, listed, readStorage, saveStorage, type Filters } from '../lib/catalog'
 
 const preferenceKey = 'daniela-catalog-v1'
+const sortOptions: DropdownOption<Filters['sort']>[] = [
+  ['recommended', 'Recomendados para Daniela'], ['low', 'Menor precio'], ['high', 'Mayor precio'],
+  ['light', 'Más livianos'], ['value', 'Mejor relación calidad-precio'],
+]
 function loadFilters(): Filters {
   const saved = readStorage(preferenceKey)
   if (!saved || typeof saved !== 'object') return defaultFilters
@@ -18,7 +23,7 @@ function loadFilters(): Filters {
   return { ...defaultFilters, ...Object.fromEntries(Object.entries(defaultFilters).map(([key, value]) => [key, typeof record[key] === typeof value ? record[key] : value])), sort: ['low', 'high', 'light', 'value'].includes(String(record.sort)) ? record.sort as Filters['sort'] : 'recommended' }
 }
 
-function Card({ laptop, comparison }: { laptop: Laptop; comparison: Comparison }) {
+function Card({ laptop, comparison, eager }: { laptop: Laptop; comparison: Comparison; eager: boolean }) {
   const offer = best(laptop)
   const count = listed(laptop).length
   const label = badge(laptop, laptops)
@@ -26,7 +31,7 @@ function Card({ laptop, comparison }: { laptop: Laptop; comparison: Comparison }
   return <article className="product-card">
     <Link to={route} className="product-art" tabIndex={-1} aria-hidden="true">
       {label && <span className="product-badge">{label}</span>}
-      <ProductImage laptop={laptop} />
+      <ProductImage laptop={laptop} eager={eager} />
     </Link>
     <div className="product-content">
       <p className="product-brand">{laptop.brand}</p>
@@ -51,6 +56,8 @@ function Card({ laptop, comparison }: { laptop: Laptop; comparison: Comparison }
 export default function Home({ comparison }: { comparison: Comparison }) {
   const [filters, setFilters] = useState(loadFilters)
   const filtered = filterCatalog(laptops, filters)
+  const vivobookPreset = filters.brand === 'ASUS' && filters.search === 'Vivobook'
+    && filters.min === FLOOR && filters.max === CEILING
   useEffect(() => { saveStorage(preferenceKey, filters) }, [filters])
 
   return <main id="contenido">
@@ -79,20 +86,23 @@ export default function Home({ comparison }: { comparison: Comparison }) {
               <label className="search"><Search size={18} /><span className="sr-only">Buscar por marca o modelo</span>
                 <input type="search" placeholder="Busca marca o modelo" value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} />
               </label>
-              <label className="sort"><span className="sr-only">Ordenar por</span><select value={filters.sort} onChange={e => setFilters({ ...filters, sort: e.target.value as Filters['sort'] })}>
-                <option value="recommended">Recomendados para Daniela</option><option value="low">Menor precio</option>
-                <option value="high">Mayor precio</option><option value="light">Más livianos</option><option value="value">Mejor relación calidad-precio</option>
-              </select></label>
+              <Dropdown className="sort" label="Ordenar por" showLabel={false} options={sortOptions}
+                value={filters.sort} onChange={sort => setFilters({ ...filters, sort })} />
             </div>
-            <p className="results-meta" id="catalog-results" tabIndex={-1} role="status">{filtered.length} {filtered.length === 1 ? 'portátil encontrado' : 'portátiles encontrados'}</p>
-            {filtered.length ? <div className="product-grid">{filtered.map(laptop => <Card key={laptop.id} {...{ laptop, comparison }} />)}</div>
+            <div className="results-heading">
+              <p className="results-meta" id="catalog-results" tabIndex={-1} role="status">{filtered.length} {filtered.length === 1 ? 'portátil encontrado' : 'portátiles encontrados'}</p>
+              <button className="vivobook-shortcut" type="button" onClick={() => setFilters(vivobookPreset ? defaultFilters : {
+                ...defaultFilters, brand: 'ASUS', search: 'Vivobook', min: FLOOR, max: CEILING,
+              })}>{vivobookPreset ? 'Volver al presupuesto de Daniela' : 'Ver Vivobook de todos los precios'}</button>
+            </div>
+            {filtered.length ? <div className="product-grid">{filtered.map((laptop, index) => <Card key={laptop.id} {...{ laptop, comparison }} eager={index < 3} />)}</div>
               : <div className="empty"><Search /><h3>No encontramos portátiles con esos filtros</h3>
                 <p>Prueba con un presupuesto más amplio o quita algún filtro.</p>
                 <button className="button secondary" onClick={() => setFilters(defaultFilters)}>Restablecer filtros</button></div>}
           </div>
         </div>
         <details className="methodology"><summary>¿Cómo se ordenan los recomendados?</summary>
-          <p>Damos prioridad a los precios dentro del presupuesto, los equipos fáciles de llevar, la memoria para usar varias aplicaciones y las pantallas con una buena cobertura de color documentada. También contamos el espacio para archivos y las características del procesador que la tienda confirma. Los datos que faltan no suman puntos.</p>
+          <p>Damos prioridad a los precios dentro del presupuesto, los equipos fáciles de llevar, la memoria para usar varias aplicaciones y las pantallas con una buena cobertura de color documentada. También contamos el espacio para archivos y las características del procesador que la tienda confirma. Si dos equipos son parecidos, damos una pequeña ventaja a la línea ASUS Vivobook porque es la que prefiere Daniela. Los datos que faltan no suman puntos.</p>
         </details>
       </div>
     </section>
