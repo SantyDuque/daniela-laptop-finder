@@ -1,6 +1,6 @@
 # El portátil ideal para Daniela
 
-Guía de compra en español colombiano para comparar portátiles de aproximadamente COP $2.000.000 a $4.000.000. Está pensada para diseño gráfico, proyectos creativos, productividad y llevar el equipo a diario.
+Guía de compra en español colombiano para comparar portátiles de COP $2.000.000 a $4.000.000, con opciones de hasta $5.000.000 cuando las mejoras justifican el gasto. Está pensada para diseño gráfico, proyectos creativos, productividad y llevar el equipo a diario.
 
 ## Qué puedes hacer
 
@@ -20,7 +20,7 @@ En **¿Qué quieres crear con tu próximo portátil?** puedes marcar uno o vario
 - **Diseño de producto y modelado 3D.** Da más peso a la memoria y los gráficos dedicados identificados. Para SOLIDWORKS de escritorio, verifica procesador Intel o AMD de 64 bits, edición compatible de Windows, al menos 16 GB de RAM (32 GB recomendados) y la certificación de la tarjeta y su controlador. [Requisitos de SOLIDWORKS](https://www.solidworks.com/support/system-requirements) · [Hardware certificado](https://www.solidworks.com/support/hardware-certification/).
 - **Diseño UX/UI.** Favorece una memoria suficiente para alternar entre el prototipo, el navegador y la documentación, además del espacio vertical de pantalla confirmado.
 
-Las reglas de `src/lib/projectFit.ts` usan las especificaciones conocidas de cada referencia. El orden personalizado combina el 40 % del puntaje general con el 75 % del puntaje medio de los usos elegidos. La pequeña ventaja de Vivobook está en el puntaje general. La comparación exige un precio reciente dentro de COP $2–4 millones para su recomendación principal. Cuando hay prioridades, exige además aptitud documentada para al menos una de ellas. Las diferencias por categoría se muestran cuando hay datos comparables y una ventaja.
+Las reglas de `src/lib/projectFit.ts` usan las especificaciones conocidas de cada referencia. El orden personalizado combina el 40 % del puntaje general con el 75 % del puntaje medio de los usos elegidos. La pequeña ventaja de Vivobook está en el puntaje general. La comparación exige un precio reciente dentro de COP $2–5 millones para su recomendación principal. Entre $4 y $5 millones solo considera configuraciones con ventajas verificadas. Cuando hay prioridades, exige además aptitud documentada para al menos una de ellas. Las diferencias por categoría se muestran cuando hay datos comparables y una ventaja.
 
 El [portafolio de Daniela Duque Robledo](https://www.behance.net/danieladuquer1) orientó la jerarquía de información, el sistema visual y la presentación de prototipos. La portada usa una imagen original generada para el sitio. Las seis piezas se enlazan en Behance.
 
@@ -41,6 +41,14 @@ npm test
 ```
 
 Para usar Edge instalado en Windows, ejecuta `$env:PLAYWRIGHT_CHANNEL='msedge'` antes de `npm test`.
+
+## Presupuesto, memoria y almacenamiento
+
+El catálogo ofrece tres accesos por presupuesto ($2–3, $3–4 y $4–5 millones) y mantiene los controles de precio personalizados. Los accesos de memoria y SSD ajustan los mismos mínimos que los desplegables. **32 GB + 1 TB** requiere ambas características instaladas. Las fichas sin precio vigente se pueden explorar con **Incluir equipos sin precio verificado**.
+
+`src/data/capacityLaptops.ts` mantiene referencias de fábrica y variantes del vendedor con identificadores separados. La ficha y la comparación muestran el origen de la memoria, el máximo documentado o si va soldada, y la garantía publicada cuando se conoce. Una capacidad ampliable describe una mejora futura, no cuenta para el filtro de RAM instalada. El bloque de memoria explica cuándo compensa pagar más.
+
+La revisión del 23 de noviembre de 2026 incluye ofertas nacionales y estados agotados. Un catálogo indexado o un precio visible con inventario agotado no sirve como oferta. Las fichas con precio CMR se registraron al precio general. Mercado Libre no permitió verificar la publicación MCO56993035 y Amazon no ofreció un total verificable con entrega en Colombia para estas referencias. Los precios mostrados se comparan antes de los costos de envío sin verificar.
 
 ## Catálogo e historial
 

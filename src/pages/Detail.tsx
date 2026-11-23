@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { ArrowLeft, ArrowUpRight, Check, CircleMinus, Palette, ShoppingBag, Sparkles } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { BuyerGuide } from '../components/BuyerGuide'
+import { MemoryGuide } from '../components/MemoryGuide'
 import { ProjectSuitability } from '../components/ProjectSuitability'
 import type { CreativeId } from '../data/creative'
 import { CompareButton, type Comparison } from '../components/Controls'
@@ -104,6 +105,7 @@ export default function Detail({ comparison, byId, priorities }: { comparison: C
       </div>
     </div>
     <ProjectSuitability {...{ laptop, priorities }} />
+    <MemoryGuide laptops={[laptop]} />
     <section className="section-card"><h2>Cómo te serviría</h2><BuyerGuide laptop={laptop} /></section>
     <div className="pros-grid">
       <section className="section-card"><h2><Check /> Lo mejor</h2><ul>{laptop.pros.map(item => <li key={item}>{item}</li>)}</ul></section>

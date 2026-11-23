@@ -1,4 +1,5 @@
 import type { Laptop } from './types.ts'
+import { capacityLaptops } from './capacityLaptops.ts'
 import { extraVivobooks } from './vivobooks.ts'
 
 const alkosto = 'https://www.alkosto.com/'
@@ -152,4 +153,5 @@ export const laptops: Laptop[] = [
     ],
   },
   ...extraVivobooks,
+  ...capacityLaptops,
 ]

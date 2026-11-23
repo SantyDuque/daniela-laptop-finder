@@ -20,20 +20,21 @@ function graphicFit(laptop: Laptop): Assessment {
   const { gamut } = laptop
   if (laptop.ram < 16) return { level: 'limited', points: 31, text:
     `Para logotipos como P autos y retoques sencillos, sus ${laptop.ram} GB pueden alcanzar. Las piezas con muchas capas o varias apps abiertas pueden pedir más memoria.` }
-  if (gamut && hasWideGamut(laptop)) return { level: 'strong', points: 92, text:
+  if (gamut && hasWideGamut(laptop)) return { level: 'strong', points: laptop.ram >= 32 ? 98 : laptop.ram >= 24 ? 95 : 92, text:
     `Para piezas como P autos o las etiquetas de XPLOD, su pantalla cubre ${gamut.percent} % de ${gamut.space} y tienes ${laptop.ram} GB para alternar entre apps. Calibra la pantalla si necesitas precisión de color.` }
   const display = laptop.gamut
     ? 'La cobertura de color documentada es limitada para trabajos que exigen tonos precisos.'
     : laptop.panel === 'OLED'
       ? 'La pantalla OLED ofrece alto contraste. La cobertura de color de esta referencia sigue por confirmar.'
       : 'Para trabajos de color preciso, falta confirmar qué colores puede reproducir la pantalla.'
-  return { level: 'good', points: laptop.panel === 'IPS' || laptop.panel === 'OLED' ? 69 : 58, text:
+  return { level: 'good', points: (laptop.panel === 'IPS' || laptop.panel === 'OLED' ? 69 : 58) + (laptop.ram >= 32 ? 8 : laptop.ram >= 24 ? 4 : 0), text:
     `Sus ${laptop.ram} GB dan espacio para trabajar en identidades o empaques de tamaño moderado. ${display}` }
 }
 
 export function solidworksCaveat(laptop: Laptop) {
   if (laptop.cpuBrand === 'Qualcomm') return 'La versión de escritorio de SOLIDWORKS requiere Intel o AMD de 64 bits. Este equipo usa ARM.'
   const ram = laptop.ram < 16 ? 'SOLIDWORKS de escritorio pide al menos 16 GB y recomienda 32 GB.' : ''
+  if (laptop.os?.includes('FreeDOS') || laptop.os?.includes('Sin Windows')) return [ram, 'Para SOLIDWORKS de escritorio debes sumar una edición compatible de Windows y verificar la certificación gráfica.'].filter(Boolean).join(' ')
   if (laptop.os?.includes('Home')) return [ram, 'SOLIDWORKS de escritorio no admite Windows Home. Revisa también la certificación de la tarjeta gráfica y su controlador.'].filter(Boolean).join(' ')
   if (ram) return ram
   if (!laptop.os?.includes('Pro') && !laptop.os?.includes('Enterprise')) return 'Para SOLIDWORKS, confirma la edición de Windows y la certificación de la tarjeta gráfica y su controlador.'
@@ -59,24 +60,55 @@ function uxFit(laptop: Laptop): Assessment {
   if (laptop.ram < 16) return { level: 'limited', points: 39, text:
     `Puedes explorar prototipos sencillos. Con ${laptop.ram} GB, los archivos grandes y muchas pestañas abiertas pueden sentirse lentos.` }
   const verticalSpace = Number(laptop.resolution?.split('×')[1]) >= 1200
-  return { level: verticalSpace ? 'strong' : 'good', points: (verticalSpace ? 88 : 69) + (laptop.ram >= 24 ? 4 : 0), text:
+  return { level: verticalSpace ? 'strong' : 'good', points: (verticalSpace ? 88 : 69) + (laptop.ram >= 32 ? 6 : laptop.ram >= 24 ? 4 : 0), text:
     `Para un rediseño como el del hospital, sus ${laptop.ram} GB ayudan a mantener el prototipo, la documentación y el navegador abiertos. ${verticalSpace ? 'La pantalla da más espacio vertical para ver el lienzo y las herramientas.' : 'Revisa que el tamaño de pantalla te resulte cómodo para trabajar en varios paneles.'}` }
 }
 
 export function assessProjects(laptop: Laptop): Record<CreativeId, Assessment> {
-  return { graphic: graphicFit(laptop), product: productFit(laptop), ux: uxFit(laptop) }
+  const graphic = graphicFit(laptop)
+  if (laptop.os?.includes('FreeDOS') || laptop.os?.includes('Sin Windows')) {
+    graphic.text += ' Si usas Illustrator o Photoshop en Windows, suma el costo de una licencia.'
+  }
+  return { graphic, product: productFit(laptop), ux: uxFit(laptop) }
 }
 
 export function preferredProjectOrder(priorities: readonly CreativeId[]) {
   return [...priorities, ...creativeIds.filter(id => !priorities.includes(id))]
 }
 
-export function cardProjectNotes(laptop: Laptop, priorities: readonly CreativeId[]) {
+function notedProjects(laptop: Laptop, priorities: readonly CreativeId[]) {
   const fit = assessProjects(laptop)
   const ordered = preferredProjectOrder(priorities)
-  if (priorities.length === 1) return [fit[priorities[0]].text]
+  if (priorities.length === 1) return [priorities[0]]
   const pool = priorities.length ? priorities : ordered
   const strongest = [...pool].sort((a, b) => fit[b].points - fit[a].points)[0]
   const caution = priorities.find(id => id !== strongest && ['limited', 'unknown'].includes(fit[id].level))
-  return caution ? [fit[strongest].text, fit[caution].text] : [fit[strongest].text]
+  return caution ? [strongest, caution] : [strongest]
+}
+
+export function cardProjectNotes(laptop: Laptop, priorities: readonly CreativeId[]) {
+  const fit = assessProjects(laptop)
+  return notedProjects(laptop, priorities).map(id => fit[id].text)
+}
+
+export function cardProjectSummary(laptop: Laptop, priorities: readonly CreativeId[]) {
+  if (!priorities.length) return [laptop.reason]
+  const fits = assessProjects(laptop)
+  return notedProjects(laptop, priorities).map(id => {
+    const level = fits[id].level
+    if (id === 'graphic') {
+      if (level === 'strong') return `${laptop.ram} GB y una gama de color amplia para revisar identidades y empaques. Calibra la pantalla si el color debe ser preciso.`
+      if (level === 'limited') return `Puedes hacer retoques y logotipos sencillos. Los archivos con muchas capas pueden exigir más de sus ${laptop.ram} GB.`
+      return `${laptop.ram} GB para editar piezas y consultar referencias. Revisa la cobertura de color si vas a preparar archivos para impresión.`
+    }
+    if (id === 'ux') {
+      if (level === 'limited') return `Útil para prototipos sencillos. Con ${laptop.ram} GB tendrás menos margen si abres muchas pestañas.`
+      return `${laptop.ram} GB para abrir el prototipo, el navegador y la documentación. ${level === 'strong' ? 'La pantalla alta deja más espacio para el lienzo.' : 'Revisa que el lienzo y los paneles te queden cómodos.'}`
+    }
+    if (level === 'good') return `Gráficos dedicados y ${laptop.ram} GB para explorar modelos 3D. Verifica los requisitos de SOLIDWORKS en la ficha.`
+    if (level === 'unknown') return 'Falta verificar la tarjeta gráfica de esta versión para evaluar el modelado 3D.'
+    if (laptop.cpuBrand === 'Qualcomm') return 'Puede servir para revisar conceptos. SOLIDWORKS de escritorio requiere un procesador Intel o AMD.'
+    if (laptop.ram < 16) return `Sus ${laptop.ram} GB dejan poco margen para modelos grandes. Revisa los requisitos de SOLIDWORKS en la ficha.`
+    return 'Sus gráficos integrados pueden servir para piezas sencillas. Para modelos complejos, revisa equipos con gráficos dedicados y los requisitos de SOLIDWORKS.'
+  })
 }

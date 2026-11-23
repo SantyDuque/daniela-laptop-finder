@@ -8,6 +8,8 @@ export const retailers = {
   pixelbuy: { name: 'Pixel Buy', host: 'pixelbuy.com.co' },
   klikken: { name: 'Klikken Group', host: 'klikken.com.co' },
   jumbo: { name: 'Jumbo', host: 'www.jumbocolombia.com' },
+  officetech: { name: 'OfficeTech', host: 'www.officetech.com.co' },
+  efyse: { name: 'EFYSE', host: 'www.tienda.efyse.com.co' },
   mercadolibre: { name: 'Mercado Libre', host: 'www.mercadolibre.com.co' },
 } as const
 

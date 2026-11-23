@@ -1,7 +1,7 @@
 import type { Laptop } from '../data/types'
 import type { CreativeId } from '../data/creative'
 import { assessProjects } from './projectFit'
-import { best, cop, DEFAULT_MAX, DEFAULT_MIN, designScreen, isVivobook, personalizedScore, portable, storage, threeD, weight } from './catalog'
+import { best, cop, DEFAULT_MAX, DEFAULT_MIN, INITIAL_MAX, designScreen, isVivobook, personalizedScore, portable, storage, threeD, weight } from './catalog'
 
 export function practicalFacts(laptop: Laptop) {
   return {
@@ -36,12 +36,37 @@ export function priceAdvice(laptop: Laptop) {
   if (!offer) return 'Falta un precio de tienda para saber si vale la pena.'
   if (offer.stale) return 'Confirma el precio en la tienda antes de decidir si vale la pena.'
   if (offer.price < DEFAULT_MIN) return 'Está por debajo del presupuesto. Vale la pena si cubre las tareas y los programas que usas.'
-  if (offer.price > DEFAULT_MAX) return 'Supera el presupuesto de Daniela. Conviene comparar con alternativas que cubran el mismo uso.'
+  if (offer.price > INITIAL_MAX) return `Supera tu presupuesto inicial. ${stretchReason(laptop, offer.price)}`
   if (offer.price <= 2_600_000 && laptop.ram >= 16) return 'Cerca del extremo bajo del presupuesto, con memoria suficiente para diseño cotidiano.'
   if (offer.price <= 2_600_000) return 'Deja margen en el presupuesto si tu trabajo se concentra en tareas sencillas.'
   if (designScreen(laptop)) return 'El precio tiene más sentido si vas a aprovechar la calidad de la pantalla.'
   if (threeD(laptop)) return 'El precio tiene más sentido si vas a aprovechar los gráficos para 3D.'
   return 'Cabe en el presupuesto. Compara su pantalla y peso con otros equipos antes de pagar más.'
+}
+
+export function extraBenefits(laptop: Laptop, cheaper: Laptop) {
+  return [
+    laptop.ram > cheaper.ram && `${laptop.ram} GB de RAM frente a ${cheaper.ram} GB`,
+    laptop.storage > cheaper.storage && `SSD de ${storage(laptop.storage)} frente a ${storage(cheaper.storage)}`,
+    laptop.graphics === 'Dedicada' && laptop.gpu && cheaper.graphics === 'Integrada' && `${laptop.gpu} en lugar de gráficos integrados`,
+    designScreen(laptop) && !designScreen(cheaper) && 'cobertura de color amplia documentada',
+    laptop.weight !== undefined && cheaper.weight !== undefined && cheaper.weight - laptop.weight >= 0.2 && `menor peso (${weight(laptop.weight)} frente a ${weight(cheaper.weight)})`,
+  ].filter((gain): gain is string => typeof gain === 'string')
+}
+
+function stretchStrengths(laptop: Laptop) {
+  return [
+    laptop.ram >= 24 && `${laptop.ram} GB de memoria para manejar proyectos con muchas capas y varias apps abiertas`,
+    laptop.storage >= 1024 && `${storage(laptop.storage)} de SSD para guardar archivos y recursos`,
+    designScreen(laptop) && 'cobertura de color amplia documentada para diseño visual',
+    assessProjects(laptop).product.level === 'good' && 'gráficos dedicados y memoria para explorar modelado 3D',
+  ].filter((gain): gain is string => typeof gain === 'string')
+}
+
+export function stretchReason(laptop: Laptop, price: number) {
+  if (price > DEFAULT_MAX) return 'Revisa primero si una opción de hasta $5 millones cubre tus proyectos.'
+  const strengths = stretchStrengths(laptop)
+  return strengths.length ? `Lo que ofrece: ${strengths.join(' · ')}.` : 'Compara sus especificaciones con una opción más económica para ver si te aporta algo concreto.'
 }
 
 export function comparePrice(laptop: Laptop, selected: Laptop[]) {
@@ -57,7 +82,10 @@ export function comparePrice(laptop: Laptop, selected: Laptop[]) {
   const delta = price.price - other.price
   const name = `${other.item.brand} ${other.item.model}`
   if (Math.abs(delta) < 1_000) return `Cuesta casi lo mismo que el ${name}.`
-  return `En los precios revisados, cuesta ${cop(Math.abs(delta))} ${delta > 0 ? 'más' : 'menos'} que el ${name}.`
+  const difference = `En los precios revisados, cuesta ${cop(Math.abs(delta))} ${delta > 0 ? 'más' : 'menos'} que el ${name}.`
+  if (delta <= 0) return difference
+  const gains = extraBenefits(laptop, other.item)
+  return `${difference} ${gains.length ? `Por esa diferencia ofrece ${gains.join('; ')}.` : 'Las fichas disponibles no muestran una mejora clara en memoria, almacenamiento, gráficos, color o peso.'}`
 }
 
 export function pickForDaniela(selected: Laptop[], priorities: readonly CreativeId[] = []) {
@@ -74,7 +102,11 @@ export function pickForDaniela(selected: Laptop[], priorities: readonly Creative
   })
   const general = [everyday, withMemory, eligible].find(items => items.length) ?? []
   const candidates = priorities.length ? matching : general
-  const [pick, runnerUp] = candidates
+  const preferred = candidates.find(item => item.price <= INITIAL_MAX)
+  const qualified = candidates.filter(item => item.price <= INITIAL_MAX || (preferred
+    ? extraBenefits(item.laptop, preferred.laptop).length > 0
+    : stretchStrengths(item.laptop).length > 0))
+  const [pick, runnerUp] = qualified
   if (!pick) return
   if (runnerUp && personalizedScore(pick.laptop, priorities) === personalizedScore(runnerUp.laptop, priorities)) return
   const cheaper = eligible.filter(item => item.price < pick.price).sort((a, b) => a.price - b.price)

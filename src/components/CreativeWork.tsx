@@ -18,7 +18,7 @@ export function PersonalizedHero() {
       <div className="hero-actions">
         <Link to="/#prioridades" className="button primary">Elegir prioridades <ArrowDown size={18} /></Link>
         <Link to="/#catalogo" className="button secondary">Explorar portátiles <ArrowRight size={17} /></Link>
-        <span className="budget-pill">COP $2 M a $4 M</span>
+        <span className="budget-pill">COP $2–4 M · Hasta $5 M</span>
       </div>
     </div>
     <div className="hero-visual"><img src="/images/creative-workspace.jpg" alt="Portátil abierto junto a un prototipo, un empaque y muestras de color" fetchPriority="high" width={1200} height={800} /></div>

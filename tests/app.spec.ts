@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { laptops } from '../src/data/laptops'
 import { observationsFor, offersFor } from '../src/data/priceHistory'
-import { best, defaultFilters, filterCatalog, isVivobook, personalizedScore, recommended } from '../src/lib/catalog'
+import { best, cop, defaultFilters, filterCatalog, isVivobook, personalizedScore, recommended } from '../src/lib/catalog'
 import { assessProjects } from '../src/lib/projectFit'
 
 const defaultResults = filterCatalog(laptops, defaultFilters).length
@@ -13,23 +13,25 @@ async function choose(page: Page, label: string, option: string) {
   await page.getByRole('option', { name: option, exact: true }).click()
 }
 
-test('catalog filters, reset, buyer guide and preference persistence', async ({ page, isMobile }) => {
+test('catalog filters, reset, project advice and preference persistence', async ({ page, isMobile }) => {
   await page.goto('/')
   await page.getByRole('link', { name: 'Explorar portátiles' }).click()
   await expect(page).toHaveURL(/#catalogo/)
   const products = page.locator('.product-card')
   await expect(products).toHaveCount(defaultResults)
-  await products.first().getByText('¿Cómo me serviría?').click()
-  await expect(products.first().getByText('Espacio para tus archivos')).toBeVisible()
+  await expect(products.first().getByRole('heading', { name: 'Pensando en tus proyectos' })).toBeVisible()
+  await expect(products.first().getByText('¿Cómo me serviría?')).toHaveCount(0)
 
   if (isMobile) await page.getByRole('button', { name: 'Filtros', exact: true }).click()
   await expect(page.locator('select')).toHaveCount(0)
   await choose(page, 'Marca', 'Acer')
-  await expect(products).toHaveCount(2)
+  const acers = filterCatalog(laptops, { ...defaultFilters, brand: 'Acer' })
+  await expect(products).toHaveCount(acers.length)
   await choose(page, 'Peso máximo', '1,55 kg')
-  await expect(products).toHaveCount(1)
+  const lightAcers = acers.filter(item => item.weight !== undefined && item.weight <= 1.55)
+  await expect(products).toHaveCount(lightAcers.length)
   await page.reload()
-  await expect(products).toHaveCount(1)
+  await expect(products).toHaveCount(lightAcers.length)
   await page.getByRole('searchbox').fill('No existe')
   await expect(page.getByText('No encontramos portátiles con esos filtros')).toBeVisible()
   await page.getByRole('button', { name: 'Restablecer filtros' }).click()
@@ -168,7 +170,7 @@ test('Vivobook shortcut includes cheaper models and keeps the product image in f
   await page.goto('/#catalogo')
   await page.getByRole('button', { name: 'Ver Vivobook de todos los precios' }).click()
   const products = page.locator('.product-card')
-  await expect(products).toHaveCount(8)
+  await expect(products).toHaveCount(filterCatalog(laptops, { ...defaultFilters, brand: 'ASUS', search: 'Vivobook', min: 1_000_000, max: 6_000_000 }).length)
   const go = products.filter({ hasText: 'E1404FA-EB1395W' })
   await expect(go).toBeVisible()
   const frame = go.locator('.product-art')
@@ -222,7 +224,7 @@ test('same-day price snapshot gives the verified retailer, spread and date', asy
 test('Vivobook preference breaks near-ties without outweighing substantially better fit', () => {
   const vivobook = laptops.find(laptop => laptop.id === 'asus-vivobook-16-x1607ca')!
   const other = { ...vivobook, brand: 'Lenovo', model: 'IdeaPad' }
-  expect(laptops.filter(isVivobook)).toHaveLength(8)
+  expect(laptops.filter(isVivobook).length).toBeGreaterThan(8)
   expect(recommended(vivobook) - recommended(other)).toBe(3)
   expect(recommended({ ...other, weight: 1.3 })).toBeGreaterThan(recommended(vivobook))
 })
@@ -285,4 +287,74 @@ test('creative fit uses confirmed specs and leaves sorting alternatives unchange
   expect(assessProjects(victus).product.text).toContain('32 GB')
   const filters = { ...defaultFilters, sort: 'low' as const }
   expect(filterCatalog(laptops, filters, ['product'])).toEqual(filterCatalog(laptops, filters))
+})
+
+test('budget and capacity shortcuts keep the installed memory and storage filters in sync', async ({ page, isMobile }) => {
+  await page.clock.setFixedTime(new Date('2026-11-23T17:00:00Z'))
+  await page.goto('/#catalogo')
+  const group = page.getByRole('group', { name: 'Filtros rápidos' })
+  const combo = group.getByRole('button', { name: '32 GB + 1 TB', exact: true })
+  await combo.click()
+  await expect(combo).toHaveAttribute('aria-pressed', 'true')
+  const cards = page.locator('.product-card')
+  expect(await cards.count()).toBeGreaterThan(2)
+  await expect(cards.filter({ hasNotText: '32 GB de RAM · SSD de 1 TB' })).toHaveCount(0)
+  await expect(cards.filter({ hasText: 'M3607HA-RP050W' })).toHaveCount(0)
+  if (isMobile) await page.getByRole('button', { name: 'Filtros', exact: true }).click()
+  await expect(page.getByRole('combobox', { name: 'RAM mínima' })).toContainText('32 GB')
+  await expect(page.getByRole('combobox', { name: 'SSD mínimo' })).toContainText('1 TB')
+  await page.getByRole('group', { name: 'Rangos de presupuesto' }).getByRole('button', { name: /4–\$5 M/ }).click()
+  await expect(cards.filter({ hasText: 'Ion Store' })).toHaveCount(1)
+  await expect(cards.filter({ hasNotText: 'Supera tu presupuesto inicial' })).toHaveCount(0)
+  await page.reload()
+  await expect(combo).toHaveAttribute('aria-pressed', 'true')
+  await expect(cards.filter({ hasText: 'Ion Store' })).toHaveCount(1)
+})
+
+test('catalog card sections align across rows and scroll independently with the keyboard', async ({ page }, testInfo) => {
+  await page.goto('/#catalogo')
+  const cards = page.locator('.product-card')
+  await expect(cards.first()).toBeVisible()
+  await page.evaluate(() => document.fonts.ready)
+  const measure = () => cards.evaluateAll(items => items.map(card => {
+    const rect = card.getBoundingClientRect()
+    const row = (selector: string) => card.querySelector(selector)!.getBoundingClientRect().top - rect.top
+    return [rect.height, row('.product-art'), row('h3'), row('.card-sku'), row('.card-capacity'), row('.price-line'), row('.card-budget'), row('.card-project-note'), row('.card-caveat'), row('.card-actions')]
+  }))
+  const original = await measure()
+  expect(original.length).toBeGreaterThan(3)
+  expect(original.every(item => item.every((value, i) => Math.abs(value - original[0][i]) < 1))).toBe(true)
+  const columns = await page.locator('.product-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length)
+  expect(columns).toBe(testInfo.project.name === 'desktop' ? 3 : testInfo.project.name === 'tablet' ? 2 : 1)
+  const first = cards.first().getByRole('group', { name: 'Recomendación según tus proyectos' })
+  const neighbor = cards.nth(1).getByRole('group', { name: 'Recomendación según tus proyectos' })
+  await first.evaluate(node => {
+    const content = node.firstElementChild!
+    for (let i = 0; i < 10; i++) {
+      const paragraph = document.createElement('p')
+      paragraph.textContent = 'Este texto de prueba cubre un caso con varias líneas y permite revisar que el contenido se pueda leer completo.'
+      content.append(paragraph)
+    }
+  })
+  await expect(first).toHaveAttribute('tabindex', '0')
+  await first.focus()
+  for (let i = 0; i < 4; i++) await first.press('ArrowDown')
+  await expect.poll(() => first.evaluate(node => node.scrollTop)).toBeGreaterThan(0)
+  expect(await neighbor.evaluate(node => node.scrollTop)).toBe(0)
+  expect(await measure()).toEqual(original)
+  await expect(cards.first().getByRole('link', { name: 'Ver detalles' })).toBeVisible()
+  await expect(cards.first().getByRole('button', { name: /Agregar a la comparación/ })).toBeVisible()
+  await expect(page.getByText('¿Cómo me serviría?')).toHaveCount(0)
+})
+
+test('comparison explains the premium for a seller-upgraded model against its base', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-23T17:00:00Z'))
+  await page.addInitScript(() => localStorage.setItem('daniela-comparison-v1',
+    JSON.stringify(['asus-vivobook-s16-rp111-16gb', 'asus-vivobook-s16-rp111-32gb-1tb'])))
+  await page.goto('/comparar')
+  const guide = page.getByRole('region', { name: '¿Vale la pena pagar más por memoria y almacenamiento?' })
+  await expect(guide.getByText(/Instalada de fábrica/)).toContainText('Memoria ampliable hasta 32 GB')
+  await expect(guide.getByText(/Ampliada por el vendedor/)).toContainText('un año de garantía directa')
+  await expect(page.getByText(new RegExp('Por esa diferencia ofrece 32 GB de RAM frente a 16 GB'))).toContainText(cop(1_500_950))
+  await expect(page.getByRole('table').getByRole('row', { name: /Origen y ampliación de la memoria/ })).toContainText('Ampliada por el vendedor')
 })

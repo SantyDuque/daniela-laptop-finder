@@ -6,7 +6,14 @@ import { offersFor } from '../data/priceHistory'
 export const FLOOR = 1_000_000
 export const CEILING = 6_000_000
 export const DEFAULT_MIN = 2_000_000
-export const DEFAULT_MAX = 4_000_000
+export const INITIAL_MAX = 4_000_000
+export const DEFAULT_MAX = 5_000_000
+
+export const budgetRanges = [
+  { min: DEFAULT_MIN, max: 3_000_000, label: 'Para cuidar el gasto' },
+  { min: 3_000_000, max: INITIAL_MAX, label: 'Tramo preferido' },
+  { min: INITIAL_MAX, max: DEFAULT_MAX, label: 'Para considerar mejoras' },
+] as const
 export const unknown = 'No verificado'
 
 const currency = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
@@ -33,8 +40,8 @@ export const threeD = (laptop: Laptop) => laptop.graphics === 'Dedicada' && lapt
 
 function fit(laptop: Laptop) {
   const portability = laptop.weight === undefined ? 0 : Math.max(0, 32 - (laptop.weight - 1.2) * 33)
-  return portability + Math.min(laptop.ram, 24) * 1.25 + (designScreen(laptop) ? 24 : laptop.panel === 'IPS' ? 7 : 0)
-    + (laptop.storage >= 1024 ? 7 : laptop.storage >= 512 ? 4 : 0)
+  return portability + Math.min(laptop.ram, 32) * 1.25 + (designScreen(laptop) ? 24 : laptop.panel === 'IPS' ? 7 : 0)
+    + (laptop.storage >= 1024 ? 12 : laptop.storage >= 512 ? 4 : 0)
     + (creative(laptop) ? 5 : 0) + Math.min(laptop.cpuCores ?? 0, 8)
 }
 
@@ -43,9 +50,11 @@ export const isVivobook = (laptop: Laptop) => laptop.brand === 'ASUS' && /^Vivob
 export function recommended(laptop: Laptop) {
   const offer = best(laptop)
   const price = offer?.stale ? undefined : offer?.price
-  const budget = price === undefined ? 0 : price <= DEFAULT_MAX ? 22 - Math.max(0, price - DEFAULT_MIN) / 150_000 : 2
+  const budget = price === undefined || price > DEFAULT_MAX ? 0
+    : 22 - Math.max(0, price - DEFAULT_MIN) / 150_000 - (price > INITIAL_MAX ? 5 : 0)
   // Three points can break a close tie without overriding a materially stronger fit.
-  return fit(laptop) + budget + (isVivobook(laptop) ? 3 : 0)
+  const needsWindows = laptop.os?.includes('FreeDOS') || laptop.os?.includes('Sin Windows')
+  return fit(laptop) + budget + (isVivobook(laptop) ? 3 : 0) - (needsWindows ? 5 : 0)
 }
 
 export function personalizedScore(laptop: Laptop, priorities: readonly CreativeId[]) {

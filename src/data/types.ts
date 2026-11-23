@@ -32,6 +32,12 @@ export type Laptop = {
   cpuBrand: 'Intel' | 'AMD' | 'Qualcomm'
   cpuCores?: number
   ram: number
+  memory?: {
+    origin?: 'factory' | 'seller-upgraded'
+    upgrade?: { max: number } | 'soldered'
+    source: string
+    warranty?: string
+  }
   storage: number
   size: number
   panel?: 'IPS' | 'OLED' | 'TN' | 'VA'

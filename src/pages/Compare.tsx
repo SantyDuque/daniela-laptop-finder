@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowLeft, ArrowUpRight, GitCompareArrows, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Comparison } from '../components/Controls'
+import { MemoryGuide, memoryConfiguration } from '../components/MemoryGuide'
 import { ProductImage } from '../components/ProductImage'
 import { creativeWork, solidworksRequirements, type CreativeId } from '../data/creative'
 import type { Laptop } from '../data/types'
@@ -57,6 +58,7 @@ export default function Compare({ comparison, byId, priorities }: { comparison: 
     }, highlight: cheapest },
     { label: 'Procesador', field: (l: Laptop) => l.cpu },
     { label: 'Memoria RAM', field: (l: Laptop) => `${l.ram} GB`, highlight: memory },
+    { label: 'Origen y ampliación de la memoria', field: memoryConfiguration },
     { label: 'Almacenamiento SSD', field: (l: Laptop) => storage(l.storage) },
     { label: 'Pantalla y resolución', field: (l: Laptop) => `${screen(l)} · ${l.resolution ?? unknown}` },
     { label: 'Tecnología del panel', field: (l: Laptop) => l.panel ?? unknown },
@@ -97,10 +99,10 @@ export default function Compare({ comparison, byId, priorities }: { comparison: 
           {alternatives && <p><strong>Si prefieres gastar menos</strong> · {name(alternatives.laptop)} cuesta {cop(recommendation.price - alternatives.price)} menos. {practicalFacts(alternatives.laptop).memory} {practicalFacts(alternatives.laptop).carrying}</p>}
           {screenAlternative && <p><strong>Si priorizas la pantalla</strong> · {name(screenAlternative.laptop)} tiene una cobertura de color amplia y documentada.</p>}
         </> : <p>{priorities.length
-          ? 'Con los precios y las fichas disponibles, todavía no hay una opción clara para tus prioridades dentro de $2 a $4 millones.'
-          : 'Con los precios disponibles, todavía no hay una opción clara dentro de $2 a $4 millones.'}</p>}
+          ? 'Con los precios y las fichas disponibles, todavía no hay una opción clara para tus prioridades dentro de $2 a $5 millones.'
+          : 'Con los precios disponibles, todavía no hay una opción clara dentro de $2 a $5 millones.'}</p>}
         <details className="buyer-details"><summary>Cómo elijo</summary>
-          <p>Primero miro cuáles caben en el presupuesto con precios revisados en los últimos 14 días. Tus prioridades cambian cuánto pesan la pantalla, la memoria y los gráficos. También cuentan el peso y el precio. Si dos opciones son parecidas, la línea Vivobook tiene una pequeña ventaja.</p>
+          <p>Primero miro cuáles caben en el presupuesto con precios revisados en los últimos 14 días. Por encima de $4 millones, busco una mejora concreta antes de sugerir el gasto adicional. Tus prioridades cambian cuánto pesan la pantalla, la memoria y los gráficos. También cuentan el peso y el precio. Si dos opciones son parecidas, la línea Vivobook tiene una pequeña ventaja.</p>
         </details>
       </section>
       {selected.length > 1 && <section className="section-card" aria-labelledby="highlights-title">
@@ -130,6 +132,7 @@ export default function Compare({ comparison, byId, priorities }: { comparison: 
         </article>)}</div>
         <Link to="#tabla-comparacion" className="back details-jump">Ver especificaciones lado a lado <ArrowDown size={16} /></Link>
       </section>
+      <MemoryGuide laptops={selected} />
       <div className="table-wrap" id="tabla-comparacion" tabIndex={0} role="region" aria-label="Tabla de comparación, desplazable horizontalmente">
         <table><caption className="sr-only">Comparación de las configuraciones seleccionadas</caption>
           <thead><tr><th scope="col">Especificación</th>{selected.map(laptop => <th key={laptop.id} scope="col">
