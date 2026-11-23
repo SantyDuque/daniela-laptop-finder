@@ -100,10 +100,7 @@ select { padding: 7px 9px; width: 100%; min-height: 37px; }
 .price-line { display: flex; align-items: baseline; justify-content: space-between; gap: 5px; margin-top: 12px; }
 .price-line strong { font-size: 1.26rem; letter-spacing: -.055em; }
 .price-line > span { font-size: .7rem; color: var(--muted); white-space: nowrap; }
-.spec-list { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 6px; padding: 10px 0; margin: 8px 0 0; border-block: 1px solid var(--line); }
-.spec-list li { display: flex; align-items: start; gap: 5px; font-size: .72rem; line-height: 1.32; color: #544b42; overflow-wrap: anywhere; }
-.spec-list svg { width: 13px; height: 13px; flex: none; color: var(--accent); }
-.card-reason { margin: 10px 0 14px; font-size: .82rem; color: var(--muted); }
+.card-reason { margin: 12px 0 6px; font-size: .82rem; color: var(--muted); }
 .card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
 .card-actions .button { flex: 1 1 auto; padding-inline: 7px; font-size: .75rem; gap: 5px; }
 .details-link { background: #f5eee5; color: #543d32; }
@@ -149,8 +146,7 @@ select { padding: 7px 9px; width: 100%; min-height: 37px; }
 .detail-price { display: grid; gap: 2px; margin-top: 12px; }
 .detail-price span { color: var(--muted); font-size: .85rem; }
 .detail-price strong { color: var(--accent-hover); font-size: 2rem; line-height: 1.2; letter-spacing: -.06em; }
-.spec-chips, .detail-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-block: 14px; }
-.spec-chips span { border: 1px solid var(--line); border-radius: 7px; font-size: .8rem; font-weight: 750; padding: 5px 8px; }
+.detail-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-block: 14px; }
 .detail-reason { display: flex; gap: 8px; color: var(--muted); }
 .detail-reason svg { flex: none; color: var(--accent); }
 #ofertas { scroll-margin-top: 12px; }
@@ -170,7 +166,7 @@ select { padding: 7px 9px; width: 100%; min-height: 37px; }
 .history-empty svg { color: var(--accent); }
 .history-range { min-width: 135px; font-size: .78rem; font-weight: 800; }
 .history-sources { font-size: .82rem; margin-top: 12px; color: var(--muted); }
-.history-sources ul, .pros-grid ul, .tradeoffs ul, td ul { list-style: disc; padding-left: 18px; }
+.history-sources ul, .pros-grid ul, td ul { list-style: disc; padding-left: 18px; }
 .history-sources a { text-decoration: underline; color: var(--accent-hover); }
 .observed { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: .84rem; }
 .observed strong { color: var(--ink); }
@@ -181,11 +177,10 @@ select { padding: 7px 9px; width: 100%; min-height: 37px; }
 .detail-specs dt, .design-list dd { color: var(--muted); }
 .spec-source { margin: 12px 0 0; }
 .pros-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.pros-grid ul, .tradeoffs ul { margin-top: 10px; color: var(--muted); line-height: 1.6; }
+.pros-grid ul { margin-top: 10px; color: var(--muted); line-height: 1.6; }
 .design-list { display: grid; margin-top: 8px; }
 .design-list > div { display: grid; grid-template-columns: .65fr 1.35fr; gap: 13px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
 .design-list dt { font-weight: 800; }
-.tradeoffs p { margin-top: 7px; color: var(--muted); }
 .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
 table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; }
 th, td { padding: 10px 13px; min-width: 185px; vertical-align: top; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); font-size: .88rem; }
@@ -194,11 +189,12 @@ thead th { background: #faf5ee; }
 thead th > a:hover { color: var(--accent-hover); text-decoration: underline; }
 tr > :last-child { border-right: 0; }
 tbody tr:last-child > * { border-bottom: 0; }
-.table-image { max-width: 185px; height: 90px; display: grid; place-items: center; margin-bottom: 5px; }
-.table-image img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.table-image { position: relative; display: grid; place-items: center; overflow: hidden; width: 150px; aspect-ratio: 16 / 9; }
+.table-image img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
 .table-image .image-fallback svg { width: 24px; height: 24px; }
 .table-offer { color: var(--accent-hover); display: inline-flex; align-items: start; column-gap: 4px; flex-wrap: wrap; }
-.table-offer strong { width: 100%; }
+.table-offer strong, .table-price-date { width: 100%; }
+.table-price-date { color: var(--muted); font-size: .76rem; font-weight: 600; }
 .table-highlight { font-weight: 800; background: #edf4e9; color: #214d38; }
 
 @media (max-width: 1140px) {
@@ -237,7 +233,6 @@ tbody tr:last-child > * { border-bottom: 0; }
   .product-content h3 { font-size: .99rem; }
   .price-line { align-items: start; flex-direction: column; gap: 0; }
   .price-line strong { font-size: 1.12rem; }
-  .spec-list { grid-template-columns: minmax(0, 1fr); }
   .card-actions .button { min-height: 40px; }
   .detail-overview { grid-template-columns: minmax(0, 1fr); }
   .detail-art { min-height: 180px; }
@@ -256,4 +251,50 @@ tbody tr:last-child > * { border-bottom: 0; }
 @media (max-width: 365px) { .product-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* Guía de compra y comparación */
+.card-caveat, .price-aged { color: var(--muted); font-size: .82rem; }
+.card-caveat { margin-bottom: 8px; }
+.price-aged { color: #806022; font-weight: 700; }
+.buyer-details { margin-block: 5px 12px; color: var(--muted); font-size: .84rem; }
+.buyer-details summary, .technical-details summary { color: var(--accent-hover); font-weight: 800; }
+.buyer-details summary { padding-block: 5px; }
+.technical-details summary { font-family: var(--heading); font-size: 1.18rem; }
+.buyer-guide { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; margin-top: 10px; }
+.buyer-guide > div { padding-block: 8px; border-top: 1px solid var(--line); font-size: .88rem; }
+.buyer-guide dt { font-weight: 800; }
+.buyer-guide dd { margin-top: 3px; color: var(--muted); line-height: 1.5; }
+.product-content .buyer-guide { grid-template-columns: 1fr; }
+.product-content .buyer-guide > div { font-size: .8rem; }
+.recommendation { background: #f8ede4; border-color: #e8d6c8; }
+.recommendation p, .tradeoff-grid p { color: var(--muted); margin-top: 7px; max-width: 74ch; }
+.recommendation p strong, .tradeoff-grid p strong { color: var(--ink); }
+.recommendation .buyer-details { margin-top: 8px; margin-bottom: 0; }
+.tradeoff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); gap: 10px 24px; margin-top: 12px; }
+.tradeoff-grid article { border-top: 1px solid var(--line); padding-top: 11px; }
+.tradeoff-grid h3 { font-size: 1.02rem; }
+.tradeoff-grid h3 a:hover { color: var(--accent-hover); text-decoration: underline; }
+.tradeoff-grid p { font-size: .87rem; }
+.details-jump { margin: 15px 0 0; }
+#tabla-comparacion { scroll-margin-top: 12px; }
+.compare-page thead th + th { position: relative; padding-bottom: 53px; }
+.compare-product { display: grid; justify-items: start; row-gap: 5px; max-width: 100%; }
+.compare-product-name { font-size: .95rem; line-height: 1.35; overflow-wrap: anywhere; }
+.compare-product-name:hover { color: var(--accent-hover); text-decoration: underline; }
+.compare-product .sku { margin: 0; font-weight: 650; line-height: 1.3; }
+.compare-page thead .quiet-button { position: absolute; bottom: 5px; inset-inline-start: 13px; min-height: 44px; }
+.compare-page td { font-variant-numeric: tabular-nums; }
+.offer-action { flex-wrap: wrap; justify-content: flex-end; }
+.offer-action > div { text-align: right; }
+
+@media (min-width: 1024px) {
+  .compare-page thead th + th { min-width: 228px; }
+  .table-image { width: 200px; }
+}
+
+@media (max-width: 650px) {
+  .buyer-guide { grid-template-columns: 1fr; }
+  .offer-action { align-items: start; justify-content: start; }
+  .offer-action > div { text-align: left; }
 }

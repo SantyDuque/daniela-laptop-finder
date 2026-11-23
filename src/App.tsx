@@ -36,8 +36,12 @@ export default function App() {
     return () => window.clearTimeout(timer)
   }, [warning])
   useEffect(() => {
-    if (hash === '#catalogo') {
-      const frame = requestAnimationFrame(() => document.getElementById('catalogo')?.scrollIntoView())
+    if (hash) {
+      const frame = requestAnimationFrame(() => {
+        const target = document.getElementById(hash.slice(1))
+        target?.scrollIntoView()
+        target?.focus({ preventScroll: true })
+      })
       return () => cancelAnimationFrame(frame)
     }
     window.scrollTo(0, 0)

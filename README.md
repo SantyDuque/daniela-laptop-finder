@@ -4,15 +4,17 @@ Guía de compra en español colombiano para comparar portátiles de aproximadame
 
 ## Qué puedes hacer
 
-- Buscar por marca, modelo o referencia y filtrar por presupuesto, especificaciones y uso. El navegador conserva las preferencias.
-- Comparar hasta tres configuraciones lado a lado. La selección se guarda en el navegador.
-- Consultar fichas técnicas con ventajas, compromisos y estimaciones para tareas de diseño.
-- Revisar precios publicados para la misma configuración, disponibilidad en la fecha de consulta y enlaces a las tiendas.
-- Consultar el historial por tienda cuando existan registros para más de una fecha.
+- Buscar por marca, modelo o referencia y filtrar por presupuesto, características y uso.
+- Comparar hasta tres configuraciones. Primero verás para quién conviene cada equipo y qué elegiría para Daniela. La tabla conserva los detalles técnicos.
+- Abrir una ficha para revisar su pantalla, peso, espacio para archivos y capacidad para trabajar con varias aplicaciones.
+- Comparar precios, fechas y disponibilidad registrada. Las publicaciones de un vendedor externo muestran su nombre.
+- Consultar precios de diferentes tiendas en el tiempo cuando existen registros de al menos dos fechas.
 
-## Tecnologías y comandos
+La selección y las preferencias se guardan en el navegador.
 
-React, TypeScript, Vite, Tailwind CSS, React Router, Lucide, Recharts y Playwright. Las fuentes se sirven con la aplicación. Se requiere Node.js 24 y npm.
+## Comandos
+
+Requiere Node.js 24 y npm. La aplicación usa React, TypeScript, Vite, Tailwind CSS, React Router, Lucide y Recharts.
 
 ```sh
 npm ci
@@ -21,42 +23,53 @@ npm run typecheck
 npm run lint
 npm run build
 npm run preview
-```
-
-Para probar el sitio en Chromium:
-
-```sh
+npm run test:prices
 npx playwright install chromium
 npm test
 ```
 
-En Windows, puedes usar Edge instalado mediante `$env:PLAYWRIGHT_CHANNEL='msedge'` antes de ejecutar las pruebas.
+Para usar Edge instalado en Windows, ejecuta `$env:PLAYWRIGHT_CHANNEL='msedge'` antes de `npm test`.
 
-## Estructura
+## Catálogo e historial
 
-| Ruta | Contenido |
-| --- | --- |
-| `src/pages` | Catálogo, ficha individual y comparación |
-| `src/components` | Filtros, imágenes, controles e historial |
-| `src/data` | Tipos, fichas, ofertas y observaciones anteriores |
-| `src/lib/catalog.ts` | Filtros, orden, formato COP y preferencias |
-| `public/images` | Imagen editorial de la portada |
-| `tests` | Pruebas de navegación, comparación e historial |
+- `src/data/laptops.ts` identifica cada configuración y sus publicaciones por URL. El identificador del equipo y la referencia (`sku`) son estables.
+- `src/data/retailers.ts` registra el nombre, identificador y dominio de cada tienda.
+- `src/data/price-history.json` guarda observaciones de precio e inventario. El sitio estático lee este archivo en cada compilación.
+- Cada registro contiene `laptopId`, `configurationId`, `retailerId`, `productUrl`, `price`, `observedAt`, `currency` y `verifiedBy`. Incluye `availability` solo si la publicación la confirma. Se usa `null` cuando se confirmó que el producto está agotado y no hay un precio válido.
+- Mantén una observación por tienda, URL y día en Colombia. Se conserva la primera observación del día al importar o recolectar otra. Las marcas nuevas usan hora UTC ISO 8601. Algunos registros originales conservan solo la fecha porque así se guardaron.
+- Un precio de hace 14 días o más aparece como anterior y queda fuera del cálculo de ahorros y de la recomendación. El historial conserva ese dato con su fecha original. Un precio solo sirve como oferta si el último registro de ese vendedor no indica que se agotó.
 
-## Mantener el catálogo
+Se registran precios generales publicados, sin descuentos condicionados por tarjeta ni gastos de envío desconocidos. El precio de Pronetsys Store incluye IVA. Su pasarela puede tener un recargo. Cada precio representa una observación y puede cambiar entre consultas. Las imágenes de producto se enlazan a la ficha y tienen un estado alternativo integrado.
 
-1. Agrega una ficha a `src/data/laptops.ts` con un ID estable y una referencia única. Verifica CPU, RAM, SSD y pantalla en la ficha del fabricante o en la publicación de la variante. Omite los campos opcionales que no puedas corroborar.
-2. Agrega cada oferta con tienda, enlace directo, fecha de consulta (`AAAA-MM-DD`) y precio en COP como entero. Registra stock solo cuando la publicación lo confirme. Que dos equipos compartan nombre comercial no basta para combinar sus ofertas.
-3. Antes de sustituir un precio, guarda su registro fechado en `archivedObservations` de `src/data/priceHistory.ts` con `retailer`, `price`, `date` y `source`. Conserva la URL de la evidencia y una observación por fecha y tienda. Las ofertas actuales con precio ya se incorporan al historial automáticamente.
-4. Edita individualmente el precio y `checkedAt` de las ofertas revisadas. Si usas las funciones auxiliares del catálogo, indica el día real de consulta. La fecha general se calcula a partir de la consulta más reciente.
-5. Ejecuta las validaciones y revisa el enlace de compra, el filtro de presupuesto y la ficha nueva.
+## Agregar tiendas, publicaciones u observaciones
 
-## Alcance de los precios y las especificaciones
+1. En `src/data/retailers.ts`, registra el identificador, nombre y dominio de la tienda.
+2. En `src/data/laptops.ts`, agrega la URL HTTPS directa en la configuración correspondiente. Compara referencia, procesador, memoria, almacenamiento y pantalla. Si el catálogo de la tienda ofrece varias versiones, registra el enlace exacto y conserva el nombre del vendedor para publicaciones de marketplace.
+3. Abre la publicación y confirma el precio en COP, la fecha real de consulta y, si está visible, la disponibilidad. Copia la estructura de un registro real de `src/data/price-history.json` a una lista JSON de importación. Usa `"verifiedBy": "manual"` y los identificadores de tu publicación. Si no hay un precio público y tampoco se confirmó que está agotado, deja solo el enlace verificado en el catálogo.
+4. Valida e importa. Si el registro de ese día requiere una corrección, edítalo en el historial y documenta el cambio en el commit.
 
-Los precios son observaciones estáticas en las fechas indicadas. Se toma el precio web general publicado, sin descuentos condicionados por tarjeta, y se excluyen los costos de envío que no se han verificado. La disponibilidad puede variar según la ciudad. La carga inicial contiene observaciones de una sola fecha por equipo, así que las fichas muestran el registro disponible sin trazar una curva. La app no prueba la autonomía ni el rendimiento de las aplicaciones de diseño. Las imágenes de producto se enlazan a las publicaciones de las tiendas y tienen un estado alternativo integrado. La portada utiliza una imagen generada. La licencia del código no cubre las imágenes de terceros.
+```sh
+npm run prices:update -- --dry-run --manual precios-revisados.json
+npm run prices:update -- --manual precios-revisados.json
+npm run prices:update -- --validate
+```
+
+La importación valida moneda, precio, fecha, enlace y correspondencia con el catálogo antes de escribir. Revisa el diff y haz commit de los datos observados. Los archivos temporales de importación quedan fuera del historial del proyecto cuando guardas solo el catálogo y el JSON final.
+
+## Actualización automática
+
+El workflow `Actualizar precios` se programa todos los días a las 9:23 a. m. de Colombia en la rama predeterminada de GitHub. También se puede ejecutar desde Actions en modo de simulación, activado por defecto para ejecuciones manuales.
+
+El script `scripts/update-prices.ts` consulta las fichas de **Pronetsys Store** y **Pixel Buy**. Lee el JSON-LD público y exige una coincidencia exacta de la referencia del fabricante y la URL, una oferta inequívoca y moneda COP. Consulta `robots.txt` con un agente identificable, respeta las pausas de la tienda y usa tiempos de espera. Ante bloqueo, redirección, precio ambiguo o un problema de acceso, conserva el registro anterior con su fecha. Puedes verificarlo localmente.
+
+```sh
+npm run prices:update -- --dry-run
+```
+
+Alkosto, Ktronix, Alkomprar, Falabella, Éxito y Klikken Group se revisan manualmente. Las publicaciones de marketplace pueden cambiar de vendedor. Éxito y Mercado Libre bloquearon las consultas directas durante la verificación. Si una tienda bloquea solicitudes, mantén la revisión manual y anota una nueva observación únicamente cuando puedas confirmar el precio público de la referencia. La ficha de Éxito verificada se muestra sin precio.
+
+GitHub Actions usa `GITHUB_TOKEN` con permiso de escritura de contenido en el trabajo de actualización. Guarda y publica solo `src/data/price-history.json` cuando hay cambios. Si la rama tiene protección, el repositorio debe permitir el commit del workflow o se usa la importación manual. Los logs de Actions indican fichas revisadas, omitidas o sin cambios.
 
 ## Publicar en Vercel
 
-1. En Vercel, selecciona **Add New → Project**, importa `daniela-laptop-finder` y elige la rama `main`.
-2. Usa el preset **Vite**, la raíz del repositorio, `npm run build` y el directorio de salida `dist`. El proyecto no requiere variables de entorno.
-3. Selecciona **Deploy**. `vercel.json` permite abrir directamente las rutas de fichas y comparación.
+En Vercel, selecciona **Add New → Project** e importa el repositorio. Usa el preset **Vite**, la raíz del repositorio, `npm run build` y el directorio de salida `dist`. No se requieren variables de entorno. Selecciona como rama de producción la que reciba las observaciones. Al llegar los commits de precios a esa rama, la integración de Git puede iniciar una nueva compilación estática. `vercel.json` permite acceder directamente a las fichas y la comparación.

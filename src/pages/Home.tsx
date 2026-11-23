@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowRight, CalendarDays, Cpu, HardDrive, Laptop as LaptopIcon, MemoryStick, Search, Weight, Zap } from 'lucide-react'
+import { ArrowDown, ArrowRight, CalendarDays, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CompareButton, type Comparison } from '../components/Controls'
+import { BuyerGuide } from '../components/BuyerGuide'
 import { CatalogFilters } from '../components/Filters'
 import { ProductImage } from '../components/ProductImage'
-import { laptops, updated } from '../data/laptops'
+import { laptops } from '../data/laptops'
+import { updated } from '../data/priceHistory'
 import type { Laptop } from '../data/types'
-import { badge, best, cop, date, defaultFilters, filterCatalog, listed, readStorage, saveStorage, screen, storage, unknown, weight, type Filters } from '../lib/catalog'
+import { badge, best, cop, date, defaultFilters, filterCatalog, listed, readStorage, saveStorage, type Filters } from '../lib/catalog'
 
 const preferenceKey = 'daniela-catalog-v1'
 function loadFilters(): Filters {
@@ -32,14 +34,12 @@ function Card({ laptop, comparison }: { laptop: Laptop; comparison: Comparison }
       <p className="sku">{laptop.sku}</p>
       <div className="price-line">
         <strong>{offer ? cop(offer.price) : 'Precio sin verificar'}</strong>
-        <span>{count === 1 ? '1 oferta' : `${count} ofertas`}</span>
+        <span>{count === 1 ? '1 precio revisado' : `${count} precios revisados`}</span>
       </div>
-      <ul className="spec-list">
-        <li><Cpu />{laptop.cpu}</li><li><MemoryStick />{laptop.ram} GB RAM</li>
-        <li><HardDrive />{storage(laptop.storage)} SSD</li><li><LaptopIcon />{screen(laptop)}</li>
-        <li><Weight />{weight(laptop.weight)}</li><li><Zap />{laptop.gpu ?? laptop.graphics ?? unknown}</li>
-      </ul>
+      {offer?.stale && offer.checkedAt && <p className="price-aged">Precio anterior · {date(offer.checkedAt)}</p>}
       <p className="card-reason">{laptop.reason}</p>
+      <p className="card-caveat"><strong>Ten en cuenta</strong> · {laptop.cons[0]}.</p>
+      <details className="buyer-details"><summary>¿Cómo me serviría?</summary><BuyerGuide laptop={laptop} /></details>
       <div className="card-actions">
         <Link className="button details-link" to={route}>Ver detalles <ArrowRight size={16} /></Link>
         <CompareButton {...{ laptop, comparison }} />
@@ -70,7 +70,7 @@ export default function Home({ comparison }: { comparison: Comparison }) {
       <div className="shell">
         <div className="catalog-heading">
           <h2 id="catalog-title">Explora tus opciones</h2>
-          <p className="updated"><CalendarDays size={16} /> Última actualización <time dateTime={updated}>{date(updated)}</time></p>
+          {updated && <p className="updated"><CalendarDays size={16} /> Última actualización <time dateTime={updated}>{date(updated)}</time></p>}
         </div>
         <div className="catalog-layout">
           <CatalogFilters {...{ filters, setFilters, laptops }} />
@@ -92,7 +92,7 @@ export default function Home({ comparison }: { comparison: Comparison }) {
           </div>
         </div>
         <details className="methodology"><summary>¿Cómo se ordenan los recomendados?</summary>
-          <p>La selección favorece los precios dentro del presupuesto, los equipos livianos, la memoria RAM, los núcleos documentados del procesador, la cobertura de color documentada y la capacidad del SSD. La relación calidad-precio pondera esas características frente al precio publicado. Los datos faltantes no suman puntos. El orden es una guía de compra y no representa pruebas de rendimiento ni de autonomía.</p>
+          <p>Damos prioridad a los precios dentro del presupuesto, los equipos fáciles de llevar, la memoria para usar varias aplicaciones y las pantallas con una buena cobertura de color documentada. También contamos el espacio para archivos y las características del procesador que la tienda confirma. Los datos que faltan no suman puntos.</p>
         </details>
       </div>
     </section>

@@ -1,17 +1,25 @@
-export type Retailer = 'Alkosto' | 'Ktronix' | 'Alkomprar' | 'Falabella' | 'HP Colombia' | 'Lenovo Colombia'
-export type Offer = {
-  retailer: Retailer
+import type { RetailerId } from './retailers.ts'
+
+export type Availability = 'available' | 'sold-out'
+export type RetailListing = {
+  retailerId: RetailerId
   url: string
-  price?: number
-  checkedAt: string
-  availability?: 'available' | 'sold-out'
+  marketplaceSeller?: string
+  paymentNote?: string
 }
+
 export type PriceObservation = {
-  retailer: Retailer
-  price: number
-  date: string
-  source: string
+  laptopId: string
+  configurationId: string
+  retailerId: RetailerId
+  productUrl: string
+  price: number | null
+  observedAt: string
+  currency: 'COP'
+  availability?: Availability
+  verifiedBy: 'manual' | 'structured-data'
 }
+
 export type Laptop = {
   id: string
   brand: string
@@ -37,5 +45,5 @@ export type Laptop = {
   reason: string
   pros: string[]
   cons: string[]
-  offers: Offer[]
+  offers: RetailListing[]
 }

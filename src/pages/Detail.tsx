@@ -1,30 +1,41 @@
 import { lazy, Suspense } from 'react'
 import { ArrowLeft, ArrowUpRight, Check, CircleMinus, Palette, ShoppingBag, Sparkles } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { BuyerGuide } from '../components/BuyerGuide'
 import { CompareButton, type Comparison } from '../components/Controls'
 import { ProductImage } from '../components/ProductImage'
-import { observationsFor } from '../data/priceHistory'
+import { observationsFor, offersFor } from '../data/priceHistory'
 import type { Laptop } from '../data/types'
 import { best, color, cop, date, listed, screen, storage, threeD, unknown, weight } from '../lib/catalog'
 
 const PriceChart = lazy(() => import('../components/PriceChart'))
 
 function Offers({ laptop }: { laptop: Laptop }) {
-  const verified = listed(laptop)
-  const offers = [...verified, ...laptop.offers.filter(offer => offer.price === undefined || offer.availability === 'sold-out')]
-  const spread = verified.length >= 2 ? verified.at(-1)!.price - verified[0].price : undefined
+  const listedOffers = listed(laptop)
+  const recent = listedOffers.filter(offer => !offer.stale)
+  const offers = [...listedOffers, ...offersFor(laptop).filter(offer => offer.price === undefined || offer.availability === 'sold-out')]
+  const spread = recent.length >= 2 ? recent.at(-1)!.price - recent[0].price : undefined
   return <section className="section-card" aria-labelledby="offers-title">
     <div className="section-heading"><div><h2 id="offers-title"><ShoppingBag /> Precios por tienda</h2>
       <p>Precios publicados para esta configuración. Confirma el total y el inventario en la tienda.</p></div></div>
     {offers.length ? <div className="offer-list">{offers.map((offer, index) => <article className="offer" key={offer.url}>
-      <div><strong>{offer.retailer}</strong>{verified.length > 0 && index === 0 && <span className="offer-badge">Mejor precio verificado</span>}
-        <p>{date(offer.checkedAt)} · {offer.availability === 'available' ? 'Disponible al consultar' : offer.availability === 'sold-out' ? 'Agotado al consultar' : 'Disponibilidad sin verificar'}</p>
+      <div><strong>{offer.listedBy}</strong>{recent.length > 0 && index === 0 && <span className="offer-badge">Mejor precio encontrado</span>}
+        {offer.marketplaceSeller && <p>Marketplace · Vendido por {offer.marketplaceSeller}</p>}
+        {offer.checkedAt && <p>{offer.price === undefined ? 'Disponibilidad revisada' : 'Precio revisado'} el <time dateTime={offer.checkedAt}>{date(offer.checkedAt)}</time></p>}
+        <p>{offer.availability === 'available' ? 'Disponible al consultar' : offer.availability === 'sold-out' ? 'Agotado al consultar' : 'Disponibilidad sin verificar'}</p>
+        {offer.stale && <p className="price-aged">Puede estar desactualizado</p>}
+        {offer.paymentNote && <p>{offer.paymentNote}</p>}
       </div>
-      <div className="offer-action"><strong>{offer.price !== undefined && offer.availability !== 'sold-out' ? cop(offer.price) : 'Sin precio disponible'}</strong>
-        <a className="button secondary" href={offer.url} target="_blank" rel="noopener noreferrer" aria-label={`Ver oferta en ${offer.retailer} (abre en otra pestaña)`}>Ver oferta <ArrowUpRight size={16} /></a>
+      <div className="offer-action"><div>
+        {offer.availability === 'sold-out' || offer.price === undefined ? <>
+          <strong>{offer.availability === 'sold-out' ? 'Sin oferta disponible' : 'Precio sin verificar'}</strong>
+          {offer.lastPrice !== undefined && offer.lastPriceAt && <p>Último precio observado {cop(offer.lastPrice)} · {date(offer.lastPriceAt)}</p>}
+        </> : <strong>{cop(offer.price)}</strong>}
+      </div>
+        <a className="button secondary" href={offer.url} target="_blank" rel="noopener noreferrer" aria-label={`Ver en la tienda ${offer.retailer} (abre en otra pestaña)`}>Ver en la tienda <ArrowUpRight size={16} /></a>
       </div>
     </article>)}</div> : <p className="history-empty">Aún no hay ofertas verificadas para esta configuración.</p>}
-    {spread !== undefined && <p className="spread">{spread === 0 ? 'Las ofertas verificadas tienen el mismo precio.' : `Diferencia entre la oferta más baja y la más alta: ${cop(spread)}.`}</p>}
+    {spread !== undefined && <p className="spread">{spread === 0 ? 'Las ofertas recientes tienen el mismo precio.' : `Puedes ahorrar hasta ${cop(spread)} frente a la oferta reciente más cara.`}</p>}
     <p className="muted fineprint">Precios web generales. Se excluyen los descuentos condicionados por tarjeta y los costos de envío sin verificar.</p>
   </section>
 }
@@ -66,25 +77,25 @@ export default function Detail({ comparison, byId }: { comparison: Comparison; b
       <div className="detail-art"><ProductImage key={laptop.id} laptop={laptop} eager /></div>
       <div>
         <p className="eyebrow"><span /> {laptop.brand}</p><h1>{laptop.model}</h1><p className="sku">{laptop.sku}</p>
-        <p className="detail-price"><span>Menor precio verificado</span><strong>{offer ? cop(offer.price) : unknown}</strong>
-          {offer && <span>{offer.retailer} · {date(offer.checkedAt)}</span>}</p>
-        <div className="spec-chips"><span>{laptop.cpu}</span><span>{laptop.ram} GB RAM</span><span>{storage(laptop.storage)} SSD</span><span>{screen(laptop)}</span><span>{weight(laptop.weight)}</span></div>
         <p className="detail-reason"><Sparkles size={21} /> {laptop.reason}</p>
+        <p className="detail-price"><span>{offer?.stale ? 'Precio anterior más bajo' : 'Mejor precio encontrado'}</span><strong>{offer ? cop(offer.price) : unknown}</strong>
+          {offer?.checkedAt && <span>{offer.retailer} · {date(offer.checkedAt)}{offer.stale && ' · Puede estar desactualizado'}</span>}</p>
         <div className="detail-actions"><a className="button primary" href="#ofertas">Ver tiendas</a><CompareButton {...{ laptop, comparison }} /></div>
       </div>
     </div>
+    <section className="section-card"><h2>Cómo te serviría</h2><BuyerGuide laptop={laptop} /></section>
+    <div className="pros-grid">
+      <section className="section-card"><h2><Check /> Lo mejor</h2><ul>{laptop.pros.map(item => <li key={item}>{item}</li>)}</ul></section>
+      <section className="section-card"><h2><CircleMinus /> Lo que debes considerar</h2><ul>{laptop.cons.map(item => <li key={item}>{item}</li>)}</ul></section>
+    </div>
     <div id="ofertas"><Offers laptop={laptop} /></div>
     <Suspense fallback={<div className="section-card" role="status">Cargando historial…</div>}><PriceChart key={laptop.id} observations={observationsFor(laptop)} /></Suspense>
-    <section className="section-card"><h2>Especificaciones</h2>
+    <details className="section-card technical-details"><summary>Especificaciones técnicas</summary>
       <div className="detail-specs">{specifications(laptop).map(([title, rows]) => <div key={title}><h3>{title}</h3>
         <dl>{rows.map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl>
       </div>)}</div>
       <a className="back spec-source" href={laptop.source} target="_blank" rel="noopener noreferrer">Consultar la ficha original <ArrowUpRight size={15} /></a>
-    </section>
-    <div className="pros-grid">
-      <section className="section-card"><h2><Check /> Lo mejor</h2><ul>{laptop.pros.map(item => <li key={item}>{item}</li>)}</ul></section>
-      <section className="section-card"><h2><CircleMinus /> Para tener en cuenta</h2><ul>{laptop.cons.map(item => <li key={item}>{item}</li>)}</ul></section>
-    </div>
+    </details>
     <DesignFit laptop={laptop} />
   </main>
 }

@@ -3,6 +3,8 @@ dist/
 .npm-cache/
 playwright-report/
 test-results/
+src/data/price-history.json.lock
+src/data/price-history.json.*.tmp
 .env*
 *.local
 .DS_Store

@@ -1,0 +1,52 @@
+name: Actualizar precios
+
+on:
+  schedule:
+    - cron: '23 14 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Consultar las tiendas sin guardar registros
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-prices-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Validar y revisar precios
+        env:
+          PRICE_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          node scripts/update-prices.ts --validate
+          if [ "$PRICE_DRY_RUN" = "true" ]; then
+            node scripts/update-prices.ts --dry-run
+          else
+            node scripts/update-prices.ts
+          fi
+      - name: Publicar cambios del historial
+        if: github.ref_type == 'branch'
+        run: |
+          if git diff --quiet -- src/data/price-history.json; then
+            echo "No hay registros nuevos."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- src/data/price-history.json
+          git commit -m 'Actualizar historial de precios'
+          git push origin "HEAD:$GITHUB_REF"

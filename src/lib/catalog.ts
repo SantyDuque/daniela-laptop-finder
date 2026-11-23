@@ -1,4 +1,5 @@
-import type { Laptop, Offer } from '../data/types'
+import type { Laptop } from '../data/types'
+import { offersFor } from '../data/priceHistory'
 
 export const FLOOR = 1_000_000
 export const CEILING = 6_000_000
@@ -18,9 +19,9 @@ export const weight = (value?: number) => value === undefined ? unknown : `${num
 export const screen = (laptop: Laptop) => `${number(laptop.size)}″${laptop.panel ? ' ' + laptop.panel : ''}`
 export const color = (laptop: Laptop) => laptop.gamut ? `${laptop.gamut.percent} % ${laptop.gamut.space}` : unknown
 
-export const listed = (laptop: Laptop) => laptop.offers.filter((offer): offer is Offer & { price: number } =>
+export const listed = (laptop: Laptop) => offersFor(laptop).filter((offer): offer is typeof offer & { price: number } =>
   offer.availability !== 'sold-out' && offer.price !== undefined
-).sort((a, b) => a.price - b.price)
+).sort((a, b) => Number(a.stale) - Number(b.stale) || a.price - b.price)
 export const best = (laptop: Laptop) => listed(laptop)[0]
 
 export const portable = (laptop: Laptop) => laptop.weight !== undefined && laptop.weight <= 1.55
@@ -37,12 +38,14 @@ function fit(laptop: Laptop) {
 }
 
 export function recommended(laptop: Laptop) {
-  const price = best(laptop)?.price
+  const offer = best(laptop)
+  const price = offer?.stale ? undefined : offer?.price
   return fit(laptop) + (price === undefined ? 0 : price <= DEFAULT_MAX ? 22 - Math.max(0, price - DEFAULT_MIN) / 150_000 : 2)
 }
 
 export function value(laptop: Laptop) {
-  const price = best(laptop)?.price
+  const offer = best(laptop)
+  const price = offer?.stale ? undefined : offer?.price
   return price === undefined ? -1 : fit(laptop) / price * 1_000_000
 }
 

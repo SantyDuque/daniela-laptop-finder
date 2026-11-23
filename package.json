@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:prices": "node --test scripts/retailer-data.test.ts",
+    "prices:update": "node scripts/update-prices.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",
