@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, GitCompareArrows, Laptop as LaptopIcon, X } from 'lucide-react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import { laptops } from './data/laptops'
+import { creativeIds, type CreativeId } from './data/creative'
 import { readStorage, saveStorage } from './lib/catalog'
 import Home from './pages/Home'
 import Detail from './pages/Detail'
 import Compare from './pages/Compare'
 
 const selectionKey = 'daniela-comparison-v1'
+const creativeKey = 'daniela-creative-priorities-v1'
 const byId = new Map(laptops.map(laptop => [laptop.id, laptop]))
 
 function initialSelection() {
@@ -27,9 +29,14 @@ export function NotFound() {
 
 export default function App() {
   const [ids, setIds] = useState(initialSelection)
+  const [priorities, setPriorities] = useState(() => {
+    const saved = readStorage(creativeKey)
+    return Array.isArray(saved) ? creativeIds.filter(id => saved.includes(id)) : []
+  })
   const [warning, setWarning] = useState(0)
   const { pathname, hash } = useLocation()
   useEffect(() => { saveStorage(selectionKey, ids) }, [ids])
+  useEffect(() => { saveStorage(creativeKey, priorities) }, [priorities])
   useEffect(() => {
     if (!warning) return
     const timer = window.setTimeout(() => setWarning(0), 4300)
@@ -63,6 +70,11 @@ export default function App() {
     }
   }
   const comparison = { ids, toggle, clear: () => { setIds([]); setWarning(0) } }
+  const preferences = {
+    priorities,
+    toggle: (id: CreativeId) => setPriorities(current => current.includes(id) ? current.filter(item => item !== id) : creativeIds.filter(item => item === id || current.includes(item))),
+    clear: () => setPriorities([]),
+  }
 
   return <>
     <a className="skip-link" href="#contenido">Saltar al contenido</a>
@@ -70,15 +82,16 @@ export default function App() {
       <nav className="shell nav" aria-label="Navegación principal">
         <Link className="brand" to="/"><span className="brand-icon"><LaptopIcon size={22} /></span><span>Daniela<span className="brand-accent">/</span>Portátiles</span></Link>
         <div className="nav-actions">
+          <Link className="nav-catalog" to="/#prioridades">Tus prioridades</Link>
           <Link className="nav-catalog" to="/#catalogo">Explorar catálogo</Link>
           <Link className="button secondary nav-compare" to="/comparar"><GitCompareArrows size={17} /> Comparar <span>{ids.length}</span></Link>
         </div>
       </nav>
     </header>
     <Routes>
-      <Route path="/" element={<Home comparison={comparison} />} />
-      <Route path="/laptops/:id" element={<Detail {...{ comparison, byId }} />} />
-      <Route path="/comparar" element={<Compare {...{ comparison, byId }} />} />
+      <Route path="/" element={<Home comparison={comparison} preferences={preferences} />} />
+      <Route path="/laptops/:id" element={<Detail {...{ comparison, byId, priorities }} />} />
+      <Route path="/comparar" element={<Compare {...{ comparison, byId, priorities }} />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
     <footer className={`site-footer ${ids.length && pathname !== '/comparar' ? 'has-tray' : ''}`}>

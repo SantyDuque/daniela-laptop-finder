@@ -1,5 +1,7 @@
 import type { Laptop } from '../data/types'
-import { best, cop, DEFAULT_MAX, DEFAULT_MIN, designScreen, isVivobook, portable, recommended, storage, threeD, weight } from './catalog'
+import type { CreativeId } from '../data/creative'
+import { assessProjects } from './projectFit'
+import { best, cop, DEFAULT_MAX, DEFAULT_MIN, designScreen, isVivobook, personalizedScore, portable, storage, threeD, weight } from './catalog'
 
 export function practicalFacts(laptop: Laptop) {
   return {
@@ -58,22 +60,31 @@ export function comparePrice(laptop: Laptop, selected: Laptop[]) {
   return `En los precios revisados, cuesta ${cop(Math.abs(delta))} ${delta > 0 ? 'más' : 'menos'} que el ${name}.`
 }
 
-export function pickForDaniela(selected: Laptop[]) {
+export function pickForDaniela(selected: Laptop[], priorities: readonly CreativeId[] = []) {
   const eligible = selected.flatMap(laptop => {
     const offer = best(laptop)
     return offer && !offer.stale && offer.price >= DEFAULT_MIN && offer.price <= DEFAULT_MAX
       ? [{ laptop, price: offer.price }] : []
-  }).sort((a, b) => recommended(b.laptop) - recommended(a.laptop))
-  const everyday = eligible.filter(({ laptop }) => laptop.ram >= 16 && laptop.weight !== undefined && laptop.weight < 2)
-  const pick = everyday[0] ?? eligible.find(({ laptop }) => laptop.ram >= 16) ?? eligible[0]
+  }).sort((a, b) => personalizedScore(b.laptop, priorities) - personalizedScore(a.laptop, priorities))
+  const withMemory = eligible.filter(({ laptop }) => laptop.ram >= 16)
+  const everyday = withMemory.filter(({ laptop }) => laptop.weight !== undefined && laptop.weight < 2)
+  const matching = eligible.filter(({ laptop }) => {
+    const fits = assessProjects(laptop)
+    return priorities.some(id => fits[id].level === 'good' || fits[id].level === 'strong')
+  })
+  const general = [everyday, withMemory, eligible].find(items => items.length) ?? []
+  const candidates = priorities.length ? matching : general
+  const [pick, runnerUp] = candidates
   if (!pick) return
+  if (runnerUp && personalizedScore(pick.laptop, priorities) === personalizedScore(runnerUp.laptop, priorities)) return
   const cheaper = eligible.filter(item => item.price < pick.price).sort((a, b) => a.price - b.price)
-  const alternative = cheaper.find(item => everyday.includes(item)) ?? cheaper[0]
+  const alternatives = priorities.length ? cheaper.filter(item => matching.includes(item)) : cheaper
+  const alternative = alternatives.find(item => everyday.includes(item)) ?? alternatives[0]
   const screenAlternative = eligible.find(item => item.laptop.id !== pick.laptop.id && designScreen(item.laptop))
   const preference = isVivobook(pick.laptop)
     ? 'También coincide con tu preferencia por la línea ASUS Vivobook. Le damos una pequeña ventaja cuando las opciones son parecidas.'
     : eligible.some(item => isVivobook(item.laptop))
-      ? 'En esta selección, el equilibrio entre precio, peso y uso de este equipo pesa más que la preferencia por Vivobook.'
+      ? 'En esta selección, la combinación de precio y aptitud para tu trabajo le da ventaja frente a los Vivobook.'
       : undefined
   return { ...pick, alternative, preference, screenAlternative: designScreen(pick.laptop) ? undefined : screenAlternative }
 }

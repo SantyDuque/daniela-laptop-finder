@@ -10,7 +10,19 @@ Guía de compra en español colombiano para comparar portátiles de aproximadame
 - Comparar precios, fechas y disponibilidad registrada. Las publicaciones de un vendedor externo muestran su nombre.
 - Comparar precios verificados de una sola fecha o ver cómo cambian cuando hay datos de varios días.
 
-La selección y las preferencias se guardan en el navegador.
+La selección de comparación, los filtros del catálogo y las prioridades creativas se guardan en el navegador.
+
+## Prioridades creativas
+
+En **¿Qué quieres crear con tu próximo portátil?** puedes marcar uno o varios usos. **Borrar prioridades** recupera la recomendación general. Cada ficha muestra la aptitud para los tres usos, y la comparación empieza por los elegidos. Los demás órdenes y filtros funcionan de forma independiente.
+
+- **Identidad visual y diseño gráfico.** Favorece los equipos con 16 GB o más de memoria y cobertura de color documentada. La calibración también importa para trabajar con colores precisos. Consulta los [requisitos de Photoshop](https://helpx.adobe.com/in/photoshop/desktop/get-started/technical-requirements-installation/adobe-photoshop-on-desktop-technical-requirements.html).
+- **Diseño de producto y modelado 3D.** Da más peso a la memoria y los gráficos dedicados identificados. Para SOLIDWORKS de escritorio, verifica procesador Intel o AMD de 64 bits, edición compatible de Windows, al menos 16 GB de RAM (32 GB recomendados) y la certificación de la tarjeta y su controlador. [Requisitos de SOLIDWORKS](https://www.solidworks.com/support/system-requirements) · [Hardware certificado](https://www.solidworks.com/support/hardware-certification/).
+- **Diseño UX/UI.** Favorece una memoria suficiente para alternar entre el prototipo, el navegador y la documentación, además del espacio vertical de pantalla confirmado.
+
+Las reglas de `src/lib/projectFit.ts` usan las especificaciones conocidas de cada referencia. El orden personalizado combina el 40 % del puntaje general con el 75 % del puntaje medio de los usos elegidos. La pequeña ventaja de Vivobook está en el puntaje general. La comparación exige un precio reciente dentro de COP $2–4 millones para su recomendación principal. Cuando hay prioridades, exige además aptitud documentada para al menos una de ellas. Las diferencias por categoría se muestran cuando hay datos comparables y una ventaja.
+
+El [portafolio de Daniela Duque Robledo](https://www.behance.net/danieladuquer1) orientó la jerarquía de información, el sistema visual y la presentación de prototipos. La portada usa una imagen original generada para el sitio. Las seis piezas se enlazan en Behance.
 
 ## Comandos
 

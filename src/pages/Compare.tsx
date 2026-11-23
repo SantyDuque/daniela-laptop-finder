@@ -2,7 +2,9 @@ import { ArrowDown, ArrowLeft, ArrowUpRight, GitCompareArrows, X } from 'lucide-
 import { Link } from 'react-router-dom'
 import type { Comparison } from '../components/Controls'
 import { ProductImage } from '../components/ProductImage'
+import { creativeWork, solidworksRequirements, type CreativeId } from '../data/creative'
 import type { Laptop } from '../data/types'
+import { assessProjects, cardProjectNotes, preferredProjectOrder } from '../lib/projectFit'
 import { comparePrice, pickForDaniela, practicalFacts, priceAdvice } from '../lib/advice'
 import { best, color, cop, date, designScreen, screen, storage, unknown, weight } from '../lib/catalog'
 
@@ -22,7 +24,22 @@ function winner(laptops: Laptop[], metric: Metric, descending = false) {
   return known.length >= 2 && known[0].value !== known[1].value ? known[0].laptop : undefined
 }
 
-export default function Compare({ comparison, byId }: { comparison: Comparison; byId: Map<string, Laptop> }) {
+function projectWinner(laptops: Laptop[], id: CreativeId) {
+  if (laptops.length < 2) return
+  const ranked = laptops.map(laptop => ({ laptop, fit: assessProjects(laptop)[id] }))
+    .sort((a, b) => b.fit.points - a.fit.points)
+  const [first, second] = ranked
+  if (second.fit.level === 'unknown' || first.fit.points === second.fit.points) return
+  if (first.fit.level === 'good' || first.fit.level === 'strong') return first
+}
+
+const projectHeadings = {
+  graphic: 'Para diseño gráfico',
+  product: 'Para explorar 3D',
+  ux: 'Para diseño UX/UI',
+}
+
+export default function Compare({ comparison, byId, priorities }: { comparison: Comparison; byId: Map<string, Laptop>; priorities: CreativeId[] }) {
   const selected = comparison.ids.flatMap(id => byId.get(id) ?? [])
   const cheapest = winner(selected, price)
   const lightest = winner(selected, light)
@@ -31,7 +48,8 @@ export default function Compare({ comparison, byId }: { comparison: Comparison; 
   const documentedOnly = selected.length >= 2 && documented.length === 1 ? documented[0] : undefined
   const wideGamut = selected.filter(designScreen)
   const highlightedDisplay = documentedOnly ?? (selected.length >= 2 && wideGamut.length === 1 ? wideGamut[0] : undefined)
-  const recommendation = pickForDaniela(selected)
+  const recommendation = pickForDaniela(selected, priorities)
+  const projectHighlights = preferredProjectOrder(priorities).map(id => ({ id, result: projectWinner(selected, id) }))
   const rows = [
     { label: 'Mejor precio encontrado', field: (l: Laptop) => {
       const offer = best(l)
@@ -49,7 +67,7 @@ export default function Compare({ comparison, byId }: { comparison: Comparison; 
     { label: 'Puertos', field: (l: Laptop) => l.ports ?? unknown },
     { label: 'Ventajas', field: (l: Laptop) => <ul>{l.pros.map(item => <li key={item}>{item}</li>)}</ul> },
     { label: 'Para tener en cuenta', field: (l: Laptop) => <ul>{l.cons.map(item => <li key={item}>{item}</li>)}</ul> },
-    { label: 'Para diseño', field: (l: Laptop) => l.reason },
+    { label: 'Pensando en tus proyectos', field: (l: Laptop) => cardProjectNotes(l, priorities).join(' ') },
   ]
   const name = (laptop: Laptop) => `${laptop.brand} ${laptop.model}`
   const suggested = recommendation?.laptop
@@ -65,19 +83,43 @@ export default function Compare({ comparison, byId }: { comparison: Comparison; 
       <p>Agrega hasta tres portátiles del catálogo para revisar sus diferencias.</p>
       <Link className="button primary" to="/#catalogo">Explorar portátiles</Link></div> : <>
       <section className="section-card recommendation" aria-labelledby="recommendation-title">
-        <h2 id="recommendation-title">¿Cuál elegiría para Daniela?</h2>
+        <div className="creative-heading">
+          <h2 id="recommendation-title">Daniela, ¿cuál te conviene más para lo que creas?</h2>
+          <Link to="/#prioridades" className="creative-source">{priorities.length ? 'Cambiar prioridades' : 'Elegir prioridades'}</Link>
+        </div>
+        {priorities.length > 0 && <p>Tus prioridades · {priorities.map(id => creativeWork[id].short).join(' · ')}</p>}
         {suggested && recommendation ? <>
-          <p><strong>{name(suggested)} · {cop(recommendation.price)}</strong></p>
-          <p>{practicalFacts(suggested).carrying} {practicalFacts(suggested).work} {priceAdvice(suggested)}</p>
-          <p>{practicalFacts(suggested).display}</p>
+          <p><strong>{selected.length > 1 ? 'Mejor equilibrio' : 'Dentro de tu presupuesto'} · {name(suggested)} · {cop(recommendation.price)}</strong></p>
+          {priorities.map(id => <p key={id}><strong>{creativeWork[id].short}</strong> · {assessProjects(suggested)[id].text}</p>)}
+          <p>{practicalFacts(suggested).carrying} {!priorities.length && practicalFacts(suggested).work} {priceAdvice(suggested)}</p>
+          {!priorities.length && <p>{practicalFacts(suggested).display}</p>}
           {recommendation.preference && <p>{recommendation.preference}</p>}
           {alternatives && <p><strong>Si prefieres gastar menos</strong> · {name(alternatives.laptop)} cuesta {cop(recommendation.price - alternatives.price)} menos. {practicalFacts(alternatives.laptop).memory} {practicalFacts(alternatives.laptop).carrying}</p>}
           {screenAlternative && <p><strong>Si priorizas la pantalla</strong> · {name(screenAlternative.laptop)} tiene una cobertura de color amplia y documentada.</p>}
-        </> : <p>Falta un precio reciente dentro de los $2 a $4 millones para recomendar uno de estos equipos con confianza.</p>}
+        </> : <p>{priorities.length
+          ? 'Con los precios y las fichas disponibles, todavía no hay una opción clara para tus prioridades dentro de $2 a $4 millones.'
+          : 'Con los precios disponibles, todavía no hay una opción clara dentro de $2 a $4 millones.'}</p>}
         <details className="buyer-details"><summary>Cómo elijo</summary>
-          <p>Primero miro cuáles caben en el presupuesto con precios revisados en los últimos 14 días. Entre esos equipos doy prioridad a los fáciles de cargar, con al menos 16 GB de memoria, una pantalla documentada para diseño y un precio que corresponda a sus ventajas. Si dos opciones son parecidas, la línea Vivobook tiene una pequeña ventaja.</p>
+          <p>Primero miro cuáles caben en el presupuesto con precios revisados en los últimos 14 días. Tus prioridades cambian cuánto pesan la pantalla, la memoria y los gráficos. También cuentan el peso y el precio. Si dos opciones son parecidas, la línea Vivobook tiene una pequeña ventaja.</p>
         </details>
       </section>
+      {selected.length > 1 && <section className="section-card" aria-labelledby="highlights-title">
+        <h2 id="highlights-title">En qué destaca cada portátil</h2>
+        <div className="project-highlights">
+          {projectHighlights.map(({ id, result }) => <article key={id} className={priorities.includes(id) ? 'assessment priority-assessment' : 'assessment'}>
+            <h3>{projectHeadings[id]}</h3>
+            {result ? <><Link to={`/laptops/${result.laptop.id}`}>{name(result.laptop)}</Link><p>{result.fit.text}</p></>
+              : <p>No hay una diferencia favorable con los datos disponibles.</p>}
+            {id === 'product' && <a className="creative-source" href={solidworksRequirements} target="_blank" rel="noopener noreferrer">Requisitos de SOLIDWORKS <ArrowUpRight size={14} /></a>}
+          </article>)}
+          <article className="assessment"><h3>Más fácil de llevar</h3>
+            {lightest ? <><Link to={`/laptops/${lightest.id}`}>{name(lightest)}</Link><p>{weight(lightest.weight)} · El peso más bajo verificado.</p></> : <p>No hay una diferencia de peso verificada.</p>}
+          </article>
+          <article className="assessment"><h3>Menor precio</h3>
+            {cheapest ? <><Link to={`/laptops/${cheapest.id}`}>{name(cheapest)}</Link><p>{cop(price(cheapest)!)} · El menor precio reciente verificado.</p></> : <p>No hay una diferencia entre precios recientes verificados.</p>}
+          </article>
+        </div>
+      </section>}
       <section className="section-card tradeoffs" aria-labelledby="tradeoffs-title"><h2 id="tradeoffs-title">Lo que cambia para ti</h2>
         <div className="tradeoff-grid">{selected.map(laptop => <article key={laptop.id}>
           <h3><Link to={`/laptops/${laptop.id}`}>{name(laptop)}</Link></h3>

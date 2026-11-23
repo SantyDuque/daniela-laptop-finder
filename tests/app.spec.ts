@@ -1,7 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { laptops } from '../src/data/laptops'
 import { observationsFor, offersFor } from '../src/data/priceHistory'
-import { best, defaultFilters, filterCatalog, isVivobook, recommended } from '../src/lib/catalog'
+import { best, defaultFilters, filterCatalog, isVivobook, personalizedScore, recommended } from '../src/lib/catalog'
+import { assessProjects } from '../src/lib/projectFit'
 
 const defaultResults = filterCatalog(laptops, defaultFilters).length
 const comparisonIds = ['asus-vivobook-s14-oled', 'lenovo-ideapad-slim-3-15ahp10', 'acer-aspire-lite-15-r5tw']
@@ -48,7 +49,7 @@ test('comparison limit, persistence, removal and empty state', async ({ page }) 
   await page.getByRole('link', { name: 'Ver comparación' }).click()
   const table = page.getByRole('table')
   await expect(table.getByRole('columnheader')).toHaveCount(4)
-  await expect(page.getByRole('heading', { name: '¿Cuál elegiría para Daniela?' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Daniela, ¿cuál te conviene más para lo que creas?' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Lo que cambia para ti' })).toBeVisible()
   await table.getByRole('button', { name: /^Quitar / }).first().click()
   await expect(table.getByRole('columnheader')).toHaveCount(3)
@@ -224,4 +225,64 @@ test('Vivobook preference breaks near-ties without outweighing substantially bet
   expect(laptops.filter(isVivobook)).toHaveLength(8)
   expect(recommended(vivobook) - recommended(other)).toBe(3)
   expect(recommended({ ...other, weight: 1.3 })).toBeGreaterThan(recommended(vivobook))
+})
+
+test('creative priorities work with the keyboard, change the catalog and survive reload', async ({ page }) => {
+  await page.goto('/')
+  const project = page.getByRole('button', { name: 'Diseño de producto y modelado 3D' })
+  const graphic = page.getByRole('button', { name: 'Identidad visual y diseño gráfico' })
+  const productTitles = page.locator('.product-card h3')
+  const initialOrder = await productTitles.allTextContents()
+  await project.focus()
+  await project.press('Space')
+  await expect(project).toHaveAttribute('aria-pressed', 'true')
+  const ranked = filterCatalog(laptops, defaultFilters, ['product']).map(laptop => laptop.model)
+  expect(ranked).not.toEqual(initialOrder)
+  await expect(productTitles).toHaveText(ranked)
+  await expect(page.locator('.product-card').first().getByRole('heading', { name: 'Pensando en tus proyectos' })).toBeVisible()
+  await expect(page.locator('.product-card').first().locator('.card-project-note')).toContainText('SOLIDWORKS')
+  await graphic.click()
+  await page.reload()
+  await expect(project).toHaveAttribute('aria-pressed', 'true')
+  await expect(graphic).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Borrar prioridades' }).click()
+  await expect(project).toHaveAttribute('aria-pressed', 'false')
+  await expect(productTitles).toHaveText(initialOrder)
+})
+
+test('personalized detail and comparison explain the graphics and CAD trade-off', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('daniela-creative-priorities-v1') === null) {
+      localStorage.setItem('daniela-creative-priorities-v1', JSON.stringify(['product', 'unknown', 'product']))
+      localStorage.setItem('daniela-comparison-v1', JSON.stringify(['asus-vivobook-s14-oled', 'lenovo-loq-15', 'hp-victus-15-fa2009la']))
+    }
+  })
+  await page.goto('/laptops/asus-vivobook-s14-oled')
+  const suitability = page.getByRole('region', { name: '¿Cómo te iría con tus proyectos, Daniela?' })
+  await expect(suitability.getByRole('article').first()).toContainText('Con limitaciones')
+  await expect(suitability.getByRole('article').first()).toContainText('Windows Home')
+  await expect(suitability.getByText('Muy buena opción').first()).toBeVisible()
+  await page.goto('/comparar')
+  const highlights = page.getByRole('region', { name: 'En qué destaca cada portátil' })
+  await expect(highlights.getByRole('article').first()).toContainText('LOQ 15IRX9')
+  await expect(highlights.getByRole('article').first()).toContainText('certificación')
+  await expect(highlights.getByRole('article').filter({ hasText: 'Para diseño gráfico' })).toContainText('Vivobook S 14 OLED')
+  await expect(page.getByText('Tus prioridades · Producto y 3D')).toBeVisible()
+  await expect(page.getByRole('table').getByRole('columnheader')).toHaveCount(4)
+  await page.getByRole('link', { name: 'Cambiar prioridades' }).click()
+  await expect(page.getByRole('button', { name: 'Diseño de producto y modelado 3D' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('creative fit uses confirmed specs and leaves sorting alternatives unchanged', () => {
+  const vivobook = laptops.find(item => item.id === 'asus-vivobook-s14-oled')!
+  const loq = laptops.find(item => item.id === 'lenovo-loq-15')!
+  const victus = laptops.find(item => item.id === 'hp-victus-15-fa2009la')!
+  expect(personalizedScore(loq, ['product'])).toBeGreaterThan(personalizedScore(vivobook, ['product']))
+  expect(personalizedScore(vivobook, ['graphic'])).toBeGreaterThan(personalizedScore(loq, ['graphic']))
+  expect(assessProjects({ ...loq, gpu: undefined, graphics: undefined }).product.level).toBe('unknown')
+  expect(assessProjects({ ...vivobook, gamut: undefined }).graphic.text).toContain('por confirmar')
+  expect(assessProjects({ ...loq, cpuBrand: 'Qualcomm' }).product.text).toContain('ARM')
+  expect(assessProjects(victus).product.text).toContain('32 GB')
+  const filters = { ...defaultFilters, sort: 'low' as const }
+  expect(filterCatalog(laptops, filters, ['product'])).toEqual(filterCatalog(laptops, filters))
 })

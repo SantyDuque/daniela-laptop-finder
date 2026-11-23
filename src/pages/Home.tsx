@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowRight, CalendarDays, Search } from 'lucide-react'
+import { ArrowRight, CalendarDays, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CompareButton, type Comparison } from '../components/Controls'
 import { BuyerGuide } from '../components/BuyerGuide'
+import { CreativeWorkSelector, PersonalizedHero, PortfolioInspiration, type CreativePreferences } from '../components/CreativeWork'
 import { CatalogFilters } from '../components/Filters'
 import { ProductImage } from '../components/ProductImage'
 import { Dropdown, type DropdownOption } from '../components/Dropdown'
 import { laptops } from '../data/laptops'
 import { updated } from '../data/priceHistory'
 import type { Laptop } from '../data/types'
+import type { CreativeId } from '../data/creative'
+import { cardProjectNotes } from '../lib/projectFit'
 import { badge, best, CEILING, cop, date, defaultFilters, filterCatalog, FLOOR, listed, readStorage, saveStorage, type Filters } from '../lib/catalog'
 
 const preferenceKey = 'daniela-catalog-v1'
@@ -23,7 +26,7 @@ function loadFilters(): Filters {
   return { ...defaultFilters, ...Object.fromEntries(Object.entries(defaultFilters).map(([key, value]) => [key, typeof record[key] === typeof value ? record[key] : value])), sort: ['low', 'high', 'light', 'value'].includes(String(record.sort)) ? record.sort as Filters['sort'] : 'recommended' }
 }
 
-function Card({ laptop, comparison, eager }: { laptop: Laptop; comparison: Comparison; eager: boolean }) {
+function Card({ laptop, comparison, eager, priorities }: { laptop: Laptop; comparison: Comparison; eager: boolean; priorities: CreativeId[] }) {
   const offer = best(laptop)
   const count = listed(laptop).length
   const label = badge(laptop, laptops)
@@ -42,7 +45,10 @@ function Card({ laptop, comparison, eager }: { laptop: Laptop; comparison: Compa
         <span>{count === 1 ? '1 precio revisado' : `${count} precios revisados`}</span>
       </div>
       {offer?.stale && offer.checkedAt && <p className="price-aged">Precio anterior · {date(offer.checkedAt)}</p>}
-      <p className="card-reason">{laptop.reason}</p>
+      <div className="card-project-note">
+        <h4>Pensando en tus proyectos</h4>
+        {cardProjectNotes(laptop, priorities).map(note => <p key={note}>{note}</p>)}
+      </div>
       <p className="card-caveat"><strong>Ten en cuenta</strong> · {laptop.cons[0]}.</p>
       <details className="buyer-details"><summary>¿Cómo me serviría?</summary><BuyerGuide laptop={laptop} /></details>
       <div className="card-actions">
@@ -53,26 +59,17 @@ function Card({ laptop, comparison, eager }: { laptop: Laptop; comparison: Compa
   </article>
 }
 
-export default function Home({ comparison }: { comparison: Comparison }) {
+export default function Home({ comparison, preferences }: { comparison: Comparison; preferences: CreativePreferences }) {
+  const { priorities } = preferences
   const [filters, setFilters] = useState(loadFilters)
-  const filtered = filterCatalog(laptops, filters)
+  const filtered = filterCatalog(laptops, filters, priorities)
   const vivobookPreset = filters.brand === 'ASUS' && filters.search === 'Vivobook'
     && filters.min === FLOOR && filters.max === CEILING
   useEffect(() => { saveStorage(preferenceKey, filters) }, [filters])
 
   return <main id="contenido">
-    <section className="hero shell">
-      <div className="hero-copy">
-        <p className="eyebrow"><span /> Guía de compra en Colombia</p>
-        <h1>El portátil ideal<br className="hero-break" /> para <em>Daniela.</em></h1>
-        <p className="hero-intro">Encuentra un portátil liviano para diseñar, crear y trabajar. Compara los equipos y los precios publicados por tiendas de Colombia.</p>
-        <div className="hero-actions">
-          <Link to="/#catalogo" className="button primary">Explorar portátiles <ArrowDown size={18} /></Link>
-          <span className="budget-pill">COP $2 M a $4 M</span>
-        </div>
-      </div>
-      <div className="hero-visual"><img src="/images/hero.jpg" alt="Portátil abierto sobre un escritorio con muestras de color" fetchPriority="high" width={1200} height={800} /></div>
-    </section>
+    <PersonalizedHero />
+    <CreativeWorkSelector {...preferences} />
     <section className="catalog-section" id="catalogo" aria-labelledby="catalog-title">
       <div className="shell">
         <div className="catalog-heading">
@@ -95,16 +92,17 @@ export default function Home({ comparison }: { comparison: Comparison }) {
                 ...defaultFilters, brand: 'ASUS', search: 'Vivobook', min: FLOOR, max: CEILING,
               })}>{vivobookPreset ? 'Volver al presupuesto de Daniela' : 'Ver Vivobook de todos los precios'}</button>
             </div>
-            {filtered.length ? <div className="product-grid">{filtered.map((laptop, index) => <Card key={laptop.id} {...{ laptop, comparison }} eager={index < 3} />)}</div>
+            {filtered.length ? <div className="product-grid">{filtered.map((laptop, index) => <Card key={laptop.id} {...{ laptop, comparison, priorities }} eager={index < 3} />)}</div>
               : <div className="empty"><Search /><h3>No encontramos portátiles con esos filtros</h3>
                 <p>Prueba con un presupuesto más amplio o quita algún filtro.</p>
                 <button className="button secondary" onClick={() => setFilters(defaultFilters)}>Restablecer filtros</button></div>}
           </div>
         </div>
         <details className="methodology"><summary>¿Cómo se ordenan los recomendados?</summary>
-          <p>Damos prioridad a los precios dentro del presupuesto, los equipos fáciles de llevar, la memoria para usar varias aplicaciones y las pantallas con una buena cobertura de color documentada. También contamos el espacio para archivos y las características del procesador que la tienda confirma. Si dos equipos son parecidos, damos una pequeña ventaja a la línea ASUS Vivobook porque es la que prefiere Daniela. Los datos que faltan no suman puntos.</p>
+          <p>Damos prioridad a los precios dentro del presupuesto, los equipos fáciles de llevar, la memoria para usar varias aplicaciones y las pantallas con una buena cobertura de color documentada. También contamos el espacio para archivos y las características del procesador que la tienda confirma. Tus prioridades cambian el peso que tienen la pantalla, la memoria o los gráficos. Si dos equipos son parecidos, damos una pequeña ventaja a la línea ASUS Vivobook. Los datos que faltan no suman puntos.</p>
         </details>
       </div>
     </section>
+    <PortfolioInspiration />
   </main>
 }

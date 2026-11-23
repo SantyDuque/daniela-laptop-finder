@@ -2,6 +2,8 @@ import { lazy, Suspense } from 'react'
 import { ArrowLeft, ArrowUpRight, Check, CircleMinus, Palette, ShoppingBag, Sparkles } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { BuyerGuide } from '../components/BuyerGuide'
+import { ProjectSuitability } from '../components/ProjectSuitability'
+import type { CreativeId } from '../data/creative'
 import { CompareButton, type Comparison } from '../components/Controls'
 import { ProductImage } from '../components/ProductImage'
 import { observationsFor, offersFor } from '../data/priceHistory'
@@ -82,7 +84,7 @@ function DesignFit({ laptop }: { laptop: Laptop }) {
   </section>
 }
 
-export default function Detail({ comparison, byId }: { comparison: Comparison; byId: Map<string, Laptop> }) {
+export default function Detail({ comparison, byId, priorities }: { comparison: Comparison; byId: Map<string, Laptop>; priorities: CreativeId[] }) {
   const { id } = useParams()
   const laptop = byId.get(id ?? '')
   if (!laptop) return <main id="contenido" className="shell page-body"><div className="empty">
@@ -101,6 +103,7 @@ export default function Detail({ comparison, byId }: { comparison: Comparison; b
         <div className="detail-actions"><a className="button primary" href="#ofertas">Ver tiendas</a><CompareButton {...{ laptop, comparison }} /></div>
       </div>
     </div>
+    <ProjectSuitability {...{ laptop, priorities }} />
     <section className="section-card"><h2>Cómo te serviría</h2><BuyerGuide laptop={laptop} /></section>
     <div className="pros-grid">
       <section className="section-card"><h2><Check /> Lo mejor</h2><ul>{laptop.pros.map(item => <li key={item}>{item}</li>)}</ul></section>

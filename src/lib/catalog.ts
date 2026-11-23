@@ -1,4 +1,6 @@
 import type { Laptop } from '../data/types'
+import type { CreativeId } from '../data/creative'
+import { assessProjects, hasWideGamut } from './projectFit'
 import { offersFor } from '../data/priceHistory'
 
 export const FLOOR = 1_000_000
@@ -26,8 +28,7 @@ export const best = (laptop: Laptop) => listed(laptop)[0]
 
 export const portable = (laptop: Laptop) => laptop.weight !== undefined && laptop.weight <= 1.55
 export const creative = (laptop: Laptop) => laptop.ram >= 16 && Boolean(laptop.graphics)
-export const designScreen = (laptop: Laptop) =>
-  (laptop.gamut?.space === 'sRGB' || laptop.gamut?.space === 'DCI-P3') && laptop.gamut.percent >= 95
+export const designScreen = hasWideGamut
 export const threeD = (laptop: Laptop) => laptop.graphics === 'Dedicada' && laptop.ram >= 8
 
 function fit(laptop: Laptop) {
@@ -45,6 +46,13 @@ export function recommended(laptop: Laptop) {
   const budget = price === undefined ? 0 : price <= DEFAULT_MAX ? 22 - Math.max(0, price - DEFAULT_MIN) / 150_000 : 2
   // Three points can break a close tie without overriding a materially stronger fit.
   return fit(laptop) + budget + (isVivobook(laptop) ? 3 : 0)
+}
+
+export function personalizedScore(laptop: Laptop, priorities: readonly CreativeId[]) {
+  if (!priorities.length) return recommended(laptop)
+  const fits = assessProjects(laptop)
+  const projectScore = priorities.reduce((sum, id) => sum + fits[id].points, 0) / priorities.length
+  return recommended(laptop) * 0.4 + projectScore * 0.75
 }
 
 export function value(laptop: Laptop) {
@@ -77,7 +85,7 @@ export const defaultFilters = {
 }
 export type Filters = typeof defaultFilters
 
-export function filterCatalog(catalog: Laptop[], f: Filters) {
+export function filterCatalog(catalog: Laptop[], f: Filters, priorities: readonly CreativeId[] = []) {
   const search = f.search.trim().toLocaleLowerCase('es-CO')
   return catalog.filter(laptop => {
     const price = best(laptop)?.price
@@ -96,7 +104,9 @@ export function filterCatalog(catalog: Laptop[], f: Filters) {
       && (!f.design || designScreen(laptop))
       && (!f.creative || creative(laptop))
       && (!f.threeD || threeD(laptop))
-  }).sort((a, b) => sorters[f.sort](b) - sorters[f.sort](a))
+  }).sort((a, b) => f.sort === 'recommended'
+    ? personalizedScore(b, priorities) - personalizedScore(a, priorities)
+    : sorters[f.sort](b) - sorters[f.sort](a))
 }
 
 export function readStorage(key: string): unknown {
