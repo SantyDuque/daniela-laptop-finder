@@ -702,5 +702,38 @@
     "currency": "COP",
     "availability": "available",
     "verifiedBy": "manual"
+  },
+  {
+    "laptopId": "lenovo-loq-15",
+    "configurationId": "83DV01B1LM",
+    "retailerId": "pixelbuy",
+    "productUrl": "https://pixelbuy.com.co/producto/83dv01b1lm/",
+    "price": 4600193,
+    "observedAt": "2026-11-24T23:32:26.980Z",
+    "currency": "COP",
+    "availability": "sold-out",
+    "verifiedBy": "structured-data"
+  },
+  {
+    "laptopId": "asus-vivobook-16-m1607ka",
+    "configurationId": "M1607KA-MB150W",
+    "retailerId": "pronetsys",
+    "productUrl": "https://store.pronetsys.com.co/producto/asus-vivobook-16",
+    "price": 3227280,
+    "observedAt": "2026-11-24T23:32:29.628Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "structured-data"
+  },
+  {
+    "laptopId": "asus-vivobook-16-x1607ca",
+    "configurationId": "X1607CA-MB110W",
+    "retailerId": "pronetsys",
+    "productUrl": "https://store.pronetsys.com.co/producto/asus-vivobook",
+    "price": 3360560,
+    "observedAt": "2026-11-24T23:32:31.781Z",
+    "currency": "COP",
+    "availability": "available",
+    "verifiedBy": "structured-data"
   }
 ]
